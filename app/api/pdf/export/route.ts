@@ -363,8 +363,42 @@ tr:last-child .field-blank { border-bottom: none; }
   line-height: 1.65;
 }
 
-/* Espaço livre no final da capa */
-.cover-spacer { flex: 1; }
+/* ── Observações do Professor ────── */
+.obs-block {
+  flex: 1;
+  margin-top: 20pt;
+  border: 1.5pt solid #aaa;
+  border-radius: 4pt;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 80pt;
+}
+
+.obs-title {
+  font-size: 9pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 6pt 12pt;
+  border-bottom: 1pt solid #ccc;
+  background: #f7f7f7;
+  color: #222;
+}
+
+.obs-lines {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  padding: 8pt 12pt;
+  gap: 0;
+}
+
+.obs-line {
+  border-bottom: 1pt solid #ddd;
+  height: 18pt;
+}
 
 /* ═══════════════════════════════════
    QUESTÕES (Página 2 em diante)
@@ -549,7 +583,20 @@ tr:last-child .field-blank { border-bottom: none; }
     <div class="instructions-text">${esc(exam.instructions)}</div>
   </div>` : ''}
 
-  <div class="cover-spacer"></div>
+  <!-- Observações do Professor -->
+  <div class="obs-block">
+    <div class="obs-title">Observações do Professor</div>
+    <div class="obs-lines">
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+      <div class="obs-line"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ══════════════════════════════════
