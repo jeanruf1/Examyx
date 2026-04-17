@@ -68,14 +68,6 @@ export default function ExamPreviewPage() {
                  <Edit3 className="w-4 h-4" />
                  Editar Questões
                </button>
-               {/* APAGADO: Botão de imprimir duplicado aqui */}
-               <button 
-                 onClick={() => window.print()}
-                 className="flex items-center gap-2 px-8 py-2 bg-[#1A1D2F] text-white rounded-full font-bold text-[13px] hover:scale-105 transition-all shadow-lg shadow-neutral-200"
-               >
-                 <Printer className="w-4 h-4" />
-                 Imprimir Prova
-               </button>
             </div>
         </div>
 
