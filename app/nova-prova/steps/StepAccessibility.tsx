@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import type { ExamFormData } from '../page'
 import { cn } from '@/lib/utils'
-import { Check, Eye, HelpCircle, Info, Lightbulb } from 'lucide-react'
+import { Check, Eye, HelpCircle, Info, Lightbulb, X } from 'lucide-react'
 
 interface AccessibilityOption {
   key: keyof ExamFormData['accessibility']
@@ -46,13 +47,16 @@ interface Props {
 }
 
 export default function StepAccessibility({ form, onChange }: Props) {
+  const [modalContent, setModalContent] = useState<{ title: string, text: string, type: 'info' | 'idea' } | null>(null)
+
   function toggle(key: keyof ExamFormData['accessibility']) {
     onChange({ accessibility: { ...form.accessibility, [key]: !form.accessibility[key] } })
   }
 
   return (
-    <div className="space-y-12 animate-fade-in w-full max-w-5xl mx-auto pb-10">
+    <div className="space-y-12 animate-fade-in w-full max-w-5xl mx-auto pb-10 relative">
       
+      {/* Cards Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {OPTIONS.map(opt => {
           const active = form.accessibility[opt.key]
@@ -74,7 +78,7 @@ export default function StepAccessibility({ form, onChange }: Props) {
                 )}>
                   {active ? <Check className="w-8 h-8" /> : <Eye className="w-8 h-8" />}
                 </div>
-                {active && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Adaptando</span>}
+                {active && <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Ativado</span>}
               </div>
 
               <div className="flex-1 space-y-6 text-left">
@@ -83,25 +87,31 @@ export default function StepAccessibility({ form, onChange }: Props) {
                   <p className="text-sm text-[#8E94BB] leading-relaxed">{opt.subtitle}</p>
                 </div>
                 
-                <div className="space-y-4">
-                  <div className="p-4 rounded-2xl bg-[#F8F9FE] border border-[#E9EAF2]">
-                     <div className="flex items-center gap-2 mb-2">
-                        <Info className="w-3 h-3 text-[#4F46E5]" />
-                        <span className="text-[9px] font-bold text-[#4F46E5] uppercase tracking-widest">Como Identificar</span>
-                     </div>
-                     <p className="text-[11px] text-[#8E94BB] leading-relaxed italic">{opt.howToIdentify}</p>
-                  </div>
-
-                  <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
-                     <div className="flex items-center gap-2 mb-2">
-                        <Lightbulb className="w-3 h-3 text-[#4F46E5]" />
-                        <span className="text-[9px] font-bold text-[#4F46E5] uppercase tracking-widest">Impacto IA</span>
-                     </div>
-                     <p className="text-[11px] text-[#4F46E5] leading-relaxed">{opt.pedagogicalImpact}</p>
-                  </div>
+                {/* Micro Buttons for details */}
+                <div className="flex flex-wrap gap-2 pt-2">
+                   <button 
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       setModalContent({ title: `Identificando ${opt.label}`, text: opt.howToIdentify, type: 'info' })
+                     }}
+                     className="px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200 text-[9px] font-bold text-[#8E94BB] uppercase transition-colors flex items-center gap-1.5"
+                   >
+                     <Info className="w-3 h-3" />
+                     Como Identificar
+                   </button>
+                   <button 
+                     onClick={(e) => {
+                       e.stopPropagation();
+                       setModalContent({ title: `Impacto IA: ${opt.label}`, text: opt.pedagogicalImpact, type: 'idea' })
+                     }}
+                     className="px-3 py-1.5 rounded-full bg-indigo-50 hover:bg-indigo-100 text-[9px] font-bold text-[#4F46E5] uppercase transition-colors flex items-center gap-1.5"
+                   >
+                     <Lightbulb className="w-3 h-3" />
+                     Impacto IA
+                   </button>
                 </div>
 
-                <div className="space-y-2 pt-4 border-t border-[#F0F1F7]">
+                <div className="space-y-2 pt-6 border-t border-[#F0F1F7]">
                   {opt.changes.map((c, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <div className={cn("w-1 h-1 rounded-full", active ? "bg-[#4F46E5]" : "bg-neutral-200")} />
@@ -120,10 +130,44 @@ export default function StepAccessibility({ form, onChange }: Props) {
          <div className="text-left">
             <p className="text-sm text-[#1A1D2F] font-bold">Base Pedagógica Inclusiva</p>
             <p className="text-[13px] text-[#8E94BB]">
-              O Examyx utiliza protocolos de educação especial para garantir que cada aluno tenha as mesmas chances de sucesso, respeitando suas particularidades neurocognitivas.
+              Protocolos de educação especial integrados para garantir equidade neurocognitiva.
             </p>
          </div>
       </div>
+
+      {/* Modal / Popup Detail (Apple Style) */}
+      {modalContent && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-6 animate-in fade-in duration-300">
+           <div className="absolute inset-0 bg-[#1A1D2F]/40 backdrop-blur-sm" onClick={() => setModalContent(null)} />
+           <div className="relative w-full max-w-md bg-white rounded-[40px] shadow-2xl p-10 animate-in zoom-in-95 duration-300">
+              <button 
+                onClick={() => setModalContent(null)}
+                className="absolute top-6 right-6 w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center hover:bg-neutral-200 transition-colors"
+              >
+                <X className="w-5 h-5 text-[#8E94BB]" />
+              </button>
+              
+              <div className={cn(
+                "w-16 h-16 rounded-[24px] flex items-center justify-center mb-8",
+                modalContent.type === 'info' ? "bg-neutral-100 text-[#1A1D2F]" : "bg-indigo-50 text-[#4F46E5]"
+              )}>
+                {modalContent.type === 'info' ? <Info className="w-8 h-8" /> : <Lightbulb className="w-8 h-8" />}
+              </div>
+
+              <h3 className="text-2xl font-bold text-[#1A1D2F] mb-4">{modalContent.title}</h3>
+              <p className="text-lg text-[#8E94BB] leading-relaxed italic">
+                {modalContent.text}
+              </p>
+              
+              <button 
+                onClick={() => setModalContent(null)}
+                className="mt-10 w-full py-4 bg-[#1A1D2F] text-white rounded-full font-bold hover:scale-105 transition-all"
+              >
+                Entendido
+              </button>
+           </div>
+        </div>
+      )}
     </div>
   )
 }
