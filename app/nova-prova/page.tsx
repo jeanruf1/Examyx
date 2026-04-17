@@ -125,28 +125,32 @@ export default function NovaProvaPage() {
         <div className="w-full max-w-2xl">
            {/* Step Headers - More Compact */}
            <div className="text-center mb-10">
-             {step === 1 && (
+             {!generating && !result && (
                <>
-                 <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Vamos começar.</h1>
-                 <p className="text-[15px] text-[#8E94BB]">Defina os parâmetros base da avaliação.</p>
-               </>
-             )}
-             {step === 2 && (
-               <>
-                 <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Dê contexto.</h1>
-                 <p className="text-[15px] text-[#8E94BB]">Escolha as fontes de conhecimento da IA.</p>
-               </>
-             )}
-             {step === 3 && (
-               <>
-                 <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Inclusão.</h1>
-                 <p className="text-[15px] text-[#8E94BB]">Adapte a linguagem para necessidades específicas.</p>
-               </>
-             )}
-             {step === 4 && (
-               <>
-                 <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Resumo.</h1>
-                 <p className="text-[15px] text-[#8E94BB]">Confirme as definições antes de gerar.</p>
+                 {step === 1 && (
+                   <>
+                     <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Vamos começar.</h1>
+                     <p className="text-[15px] text-[#8E94BB]">Defina os parâmetros base da avaliação.</p>
+                   </>
+                 )}
+                 {step === 2 && (
+                   <>
+                     <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Dê contexto.</h1>
+                     <p className="text-[15px] text-[#8E94BB]">Escolha as fontes de conhecimento da IA.</p>
+                   </>
+                 )}
+                 {step === 3 && (
+                   <>
+                     <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Inclusão.</h1>
+                     <p className="text-[15px] text-[#8E94BB]">Adapte a linguagem para necessidades específicas.</p>
+                   </>
+                 )}
+                 {step === 4 && (
+                   <>
+                     <h1 className="text-[32px] font-extrabold tracking-tight mb-2">Resumo.</h1>
+                     <p className="text-[15px] text-[#8E94BB]">Confirme as definições antes de gerar.</p>
+                   </>
+                 )}
                </>
              )}
            </div>
