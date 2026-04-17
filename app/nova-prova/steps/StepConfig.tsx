@@ -26,7 +26,9 @@ export default function StepConfig({ form, onChange }: Props) {
     onChange({ questionMix: { ...form.questionMix, [key]: val } })
   }
 
-  const totalQuestions = Object.values(form.questionMix).reduce((a, b) => a + b, 0)
+  const totalQuestions = form?.questionMix 
+    ? Object.values(form.questionMix).reduce((a, b) => a + b, 0)
+    : 0
 
   return (
     <div className="space-y-8 animate-fade-in w-full">

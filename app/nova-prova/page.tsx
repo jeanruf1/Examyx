@@ -94,7 +94,9 @@ export default function NovaProvaPage() {
     }
   }
 
-  const totalQuestions = Object.values(form.questionMix).reduce((a, b) => a + b, 0)
+  const totalQuestions = form?.questionMix 
+    ? Object.values(form.questionMix).reduce((a, b) => a + b, 0)
+    : 0
 
   return (
     <div className="max-w-[1000px] mx-auto pb-20 animate-fade-in relative">
