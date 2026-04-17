@@ -7,10 +7,9 @@ import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Share2, MoreHorizontal, Clock, Hash,
-  Eye, EyeOff
+  Clock, Hash, MoreHorizontal
 } from 'lucide-react'
-import { formatDate, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 export default function ExamPreviewPage() {
   const { id } = useParams()
@@ -18,7 +17,6 @@ export default function ExamPreviewPage() {
   const [exam, setExam] = useState<any>(null)
   const [questions, setQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [showGabarito, setShowGabarito] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -56,25 +54,16 @@ export default function ExamPreviewPage() {
                Voltar
             </Link>
             <div className="flex items-center gap-3">
-               <button 
-                 onClick={() => setShowGabarito(!showGabarito)}
-                 className={cn(
-                   "flex items-center gap-2 px-4 py-2 rounded-full font-bold text-[13px] transition-all border",
-                   showGabarito 
-                    ? "bg-emerald-50 text-emerald-600 border-emerald-200" 
-                    : "bg-white text-[#8E94BB] border-[#E9EAF2] hover:border-[#8E94BB]"
-                 )}
-               >
-                 {showGabarito ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                 {showGabarito ? 'Ocultar Gabarito' : 'Ver Gabarito'}
-               </button>
-               <button className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E9EAF2] text-[#8E94BB] rounded-full font-bold text-[13px] hover:border-[#8E94BB]">
+               <button className="flex items-center gap-2 px-6 py-2 bg-white border border-[#E9EAF2] text-[#1A1D2F] rounded-full font-bold text-[13px] hover:border-[#1A1D2F] transition-all">
                  <Edit3 className="w-4 h-4" />
-                 Editar
+                 Editar Questões
                </button>
-               <button className="flex items-center gap-2 px-6 py-2 bg-[#1A1D2F] text-white rounded-full font-bold text-[13px] hover:scale-105 transition-all shadow-lg shadow-neutral-200">
+               <button 
+                 onClick={() => window.print()}
+                 className="flex items-center gap-2 px-8 py-2 bg-[#1A1D2F] text-white rounded-full font-bold text-[13px] hover:scale-105 transition-all shadow-lg shadow-neutral-200"
+               >
                  <Printer className="w-4 h-4" />
-                 Imprimir
+                 Imprimir Prova
                </button>
             </div>
         </div>
@@ -96,7 +85,7 @@ export default function ExamPreviewPage() {
           {questions.map((q, idx) => (
             <div key={q.id} className="p-10 rounded-[40px] bg-white border border-[#E9EAF2] shadow-sm hover:border-[#4F46E5] transition-all group">
               <div className="flex justify-between items-start mb-8">
-                <span className="w-12 h-12 rounded-[18px] bg-[#F8F9FE] text-[#1A1D2F] flex items-center justify-center font-bold text-xl border border-[#E9EAF2] group-hover:bg-[#4F46E5] group-hover:text-white transition-all group-hover:rotate-3">
+                <span className="w-12 h-12 rounded-[18px] bg-[#F8F9FE] text-[#1A1D2F] flex items-center justify-center font-bold text-xl border border-[#E9EAF2] group-hover:bg-[#4F46E5] group-hover:text-white transition-all">
                   {idx + 1}
                 </span>
                 <div className="flex gap-2">
@@ -114,13 +103,13 @@ export default function ExamPreviewPage() {
                   {q.options.map((opt: any) => (
                     <div key={opt.letter} className={cn(
                       "flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                      showGabarito && opt.is_correct 
+                      opt.is_correct 
                         ? "border-emerald-500 bg-emerald-50/30" 
-                        : "border-[#F0F1F7] hover:border-[#8E94BB] bg-white"
+                        : "border-[#F0F1F7] bg-white"
                     )}>
                       <span className={cn(
                         "w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
-                        showGabarito && opt.is_correct 
+                        opt.is_correct 
                           ? "bg-emerald-500 text-white" 
                           : "bg-neutral-50 text-[#8E94BB] border border-[#E9EAF2]"
                       )}>
@@ -128,21 +117,21 @@ export default function ExamPreviewPage() {
                       </span>
                       <span className={cn(
                         "text-[15px] leading-snug",
-                        showGabarito && opt.is_correct ? "text-emerald-700 font-bold" : "text-[#1A1D2F] font-medium"
+                        opt.is_correct ? "text-emerald-700 font-bold" : "text-[#1A1D2F] font-medium"
                       )}>
                         {opt.text}
                       </span>
-                      {showGabarito && opt.is_correct && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />}
+                      {opt.is_correct && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />}
                     </div>
                   ))}
                 </div>
               )}
 
-              {showGabarito && q.explanation && (
-                <div className="mt-8 p-6 rounded-3xl bg-neutral-50 border border-[#E9EAF2] animate-in fade-in slide-in-from-top-2">
+              {q.explanation && (
+                <div className="mt-8 p-6 rounded-3xl bg-neutral-50 border border-[#E9EAF2]">
                    <div className="flex items-center gap-2 mb-2 text-[#4F46E5]">
                       <Info className="w-4 h-4" />
-                      <span className="text-[11px] font-bold uppercase tracking-wider">Explicação do Professor</span>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">Gabarito Comentado</span>
                    </div>
                    <p className="text-[13px] text-[#8E94BB] leading-relaxed">
                      {q.explanation}
@@ -181,7 +170,7 @@ export default function ExamPreviewPage() {
             <div className="p-6 rounded-3xl bg-indigo-50/50 border border-indigo-100">
                <div className="flex items-center gap-2 mb-3">
                   <Brain className="w-4 h-4 text-[#4F46E5]" />
-                  <span className="text-[11px] font-bold text-[#4F46E5] uppercase tracking-wider">Parecer Pedagógico</span>
+                  <span className="text-[11px] font-bold text-[#4F46E5] uppercase tracking-wider">Parecer da IA</span>
                </div>
                <p className="text-[13px] text-[#4F46E5]/70 leading-relaxed italic">
                  {exam.pedagogical_warning || "Avaliação estruturada conforme diretrizes BNCC."}
@@ -189,16 +178,27 @@ export default function ExamPreviewPage() {
             </div>
 
             <div className="space-y-4 pt-4">
+               <button className="w-full h-14 bg-[#1A1D2F] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-neutral-200">
+                 <Printer className="w-5 h-5" />
+                 Imprimir Prova
+               </button>
                <button className="w-full h-14 bg-[#4F46E5] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-indigo-500/20">
                  <Download className="w-5 h-5" />
-                 Gerar PDF Final
-               </button>
-               <button className="w-full h-14 bg-white border border-[#E9EAF2] text-[#8E94BB] rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:bg-neutral-50 transition-all">
-                 <Share2 className="w-5 h-5" />
-                 Compartilhar
+                 Baixar PDF
                </button>
             </div>
           </div>
+        </div>
+
+        {/* Pro Plan Upsell Card */}
+        <div className="p-8 rounded-[40px] bg-[#4F46E5] text-white relative overflow-hidden group">
+          <div className="absolute top-[-20px] right-[-20px] w-32 h-32 bg-white/10 rounded-full" />
+          <Star className="w-6 h-6 mb-4 fill-white text-white" />
+          <h4 className="text-[18px] font-bold mb-2">Plano Trial</h4>
+          <p className="text-white/70 text-[13px] mb-6 leading-relaxed">Sua licença expira em breve. Migre para o Pro para manter seu banco de questões.</p>
+          <button className="w-full py-3 bg-white text-[#4F46E5] rounded-2xl font-bold text-sm hover:bg-indigo-50 transition-all">
+            Assinar agora
+          </button>
         </div>
       </div>
     </div>
