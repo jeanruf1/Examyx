@@ -141,20 +141,20 @@ export default function StepConfig({ form, onChange }: Props) {
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <ListTodo className="w-3.5 h-3.5 text-[#8E94BB]" />
-            <label className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-wider">Formato & Qtd Alternativas</label>
+            <label className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-wider">Formato & Estilo</label>
           </div>
           <div className="flex flex-col gap-3">
              <div className="flex bg-[#F8F9FE] p-1.5 rounded-full gap-1 border border-[#E9EAF2]">
-                {[4, 5].map(o => (
+                {(['regular', 'enem', 'homework'] as const).map(s => (
                   <button
-                    key={o}
-                    onClick={() => onChange({ optionsCount: o })}
+                    key={s}
+                    onClick={() => onChange({ style: s })}
                     className={cn(
-                      "flex-1 py-2 rounded-full text-[10px] font-bold transition-all",
-                      form.optionsCount === o ? "bg-[#4F46E5] text-white shadow-md" : "text-[#8E94BB] hover:text-[#4F46E5]"
+                      "flex-1 py-2 rounded-full text-[9px] font-bold uppercase tracking-widest transition-all",
+                      form.style === s ? "bg-[#4F46E5] text-white shadow-md" : "text-[#8E94BB] hover:bg-neutral-50"
                     )}
                   >
-                    {o} Opções
+                    {s === 'regular' ? 'Regular' : s === 'enem' ? 'ENEM' : 'Dever'}
                   </button>
                 ))}
              </div>
@@ -168,14 +168,14 @@ export default function StepConfig({ form, onChange }: Props) {
                       form.optionsFormat === f ? "bg-white text-[#4F46E5] shadow-sm border border-[#E9EAF2]" : "text-[#8E94BB]"
                     )}
                   >
-                    {f === 'letters' ? 'A, B, C...' : 'I, II, III...'}
+                    {f === 'letters' ? 'Letras (A-E)' : 'Romanos (I-V)'}
                   </button>
                 ))}
              </div>
           </div>
         </div>
 
-        {/* Difficulty & Bloom - Minimalist Row */}
+        {/* Difficulty & Bloom */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Hash className="w-3.5 h-3.5 text-[#8E94BB]" />

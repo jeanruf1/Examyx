@@ -21,6 +21,10 @@ const DIFFICULTY_LABEL: Record<string, string> = {
   facil: 'Fácil', medio: 'Médio', dificil: 'Difícil',
 }
 
+const STYLE_LABEL: Record<string, string> = {
+  regular: 'Regular', enem: 'ENEM', homework: 'Dever de Casa',
+}
+
 export default function StepGenerate({ form, totalQuestions, generating, result, error, onGenerate, onGoToExam }: Props) {
 
   // ── Success state ────────────────────────────────────────────────────────
@@ -100,11 +104,18 @@ export default function StepGenerate({ form, totalQuestions, generating, result,
               <p className="text-[10px] font-bold text-[#8E94BB] uppercase">Bloom</p>
            </div>
            <div>
-              <p className="text-xl font-bold text-[#1A1D2F]">{form.style === 'enem' ? 'ENEM' : 'Padrão'}</p>
+              <p className="text-xl font-bold text-[#1A1D2F]">{STYLE_LABEL[form.style]}</p>
               <p className="text-[10px] font-bold text-[#8E94BB] uppercase">Estilo</p>
            </div>
         </div>
       </div>
+
+      {error && (
+        <div className="flex items-center gap-4 p-5 rounded-[24px] bg-red-50 border border-red-100 text-red-800 text-left">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <p className="text-sm">{error}</p>
+        </div>
+      )}
 
       <p className="text-sm text-[#8E94BB] italic">
         IA pedagógica pronta para estruturar sua prova.
