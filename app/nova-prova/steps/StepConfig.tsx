@@ -2,7 +2,7 @@
 
 import type { ExamFormData } from '../page'
 import { cn } from '@/lib/utils'
-import { BookOpen, GraduationCap, Target } from 'lucide-react'
+import { BookOpen, GraduationCap, Target, Hash, ListTodo } from 'lucide-react'
 
 const SUBJECTS = [
   'Matemática', 'Língua Portuguesa', 'Ciências', 'História', 'Geografia', 
@@ -88,8 +88,53 @@ export default function StepConfig({ form, onChange }: Props) {
         </div>
       </div>
 
-      {/* Secondary Configs - Scaled Down Pills */}
-      <div className="flex flex-col items-center gap-4 pt-2">
+      {/* Quantity & Alternatives Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4 border-t border-[#F0F1F7]">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Hash className="w-3.5 h-3.5 text-[#8E94BB]" />
+            <label className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-wider">Quantidade de Questões</label>
+          </div>
+          <div className="flex bg-[#F8F9FE] p-1.5 rounded-full gap-1 border border-[#E9EAF2]">
+            {[5, 8, 10, 15].map(q => (
+              <button
+                key={q}
+                onClick={() => onChange({ questionCount: q })}
+                className={cn(
+                  "flex-1 py-2 rounded-full text-[11px] font-bold transition-all",
+                  form.questionCount === q ? "bg-[#4F46E5] text-white shadow-md" : "text-[#8E94BB] hover:text-[#4F46E5]"
+                )}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <ListTodo className="w-3.5 h-3.5 text-[#8E94BB]" />
+            <label className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-wider">Alternativas por Questão</label>
+          </div>
+          <div className="flex bg-[#F8F9FE] p-1.5 rounded-full gap-1 border border-[#E9EAF2]">
+            {[4, 5].map(o => (
+              <button
+                key={o}
+                onClick={() => onChange({ optionsCount: o })}
+                className={cn(
+                  "flex-1 py-2 rounded-full text-[11px] font-bold transition-all",
+                  form.optionsCount === o ? "bg-[#4F46E5] text-white shadow-md" : "text-[#8E94BB] hover:text-[#4F46E5]"
+                )}
+              >
+                {o} Alternativas ({o === 4 ? 'A-D' : 'A-E'})
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Configs - Difficulty & Bloom */}
+      <div className="flex flex-col items-center gap-4 pt-4 border-t border-[#F0F1F7]">
         <div className="flex flex-wrap items-center justify-center gap-3">
           <div className="bg-white border border-[#E9EAF2] p-1.5 rounded-full flex gap-1 shadow-sm">
             {(['facil', 'medio', 'dificil'] as const).map(d => (

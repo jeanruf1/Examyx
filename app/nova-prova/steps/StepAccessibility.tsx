@@ -15,20 +15,20 @@ const OPTIONS: AccessibilityOption[] = [
   {
     key: 'tea',
     label: 'Autismo (TEA)',
-    subtitle: 'Linguagem literal.',
-    changes: ['Sem metáforas', 'Frases curtas']
+    subtitle: 'Linguagem literal e direta.',
+    changes: ['Sem metáforas', 'Frases curtas', 'Contexto explícito']
   },
   {
     key: 'dyslexia',
     label: 'Dislexia',
     subtitle: 'Fluidez da leitura.',
-    changes: ['Vocabulário simples', 'Espaçamento']
+    changes: ['Vocabulário simples', 'Espaçamento amplo', 'Alternativas numeradas']
   },
   {
     key: 'adhd',
     label: 'TDAH',
     subtitle: 'Foco na atenção.',
-    changes: ['Comandos claros', 'Sem distrações']
+    changes: ['Comandos claros', 'Sem distrações', 'Passo a passo']
   },
 ]
 
@@ -70,7 +70,7 @@ export default function StepAccessibility({ form, onChange }: Props) {
                 <h4 className="text-base font-bold text-[#1A1D2F] mb-1">{opt.label}</h4>
                 <p className="text-xs text-[#8E94BB] mb-4">{opt.subtitle}</p>
                 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 pt-3 border-t border-[#F0F1F7]">
                   {opt.changes.map((c, i) => (
                     <div key={i} className="flex items-center justify-center gap-1.5">
                       <div className={cn("w-1 h-1 rounded-full", active ? "bg-[#4F46E5]" : "bg-neutral-200")} />
@@ -86,7 +86,9 @@ export default function StepAccessibility({ form, onChange }: Props) {
 
       <div className="flex items-center justify-center gap-3 py-6 border-t border-[#F0F1F7]">
          <HelpCircle className="w-4 h-4 text-[#8E94BB]" />
-         <p className="text-sm text-[#8E94BB] italic">IA adaptará a gramática automaticamente.</p>
+         <p className="text-sm text-[#8E94BB] italic text-center">
+           A IA adaptará a estrutura gramatical e o vocabulário automaticamente.
+         </p>
       </div>
     </div>
   )

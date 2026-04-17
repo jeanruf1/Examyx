@@ -17,6 +17,8 @@ export type ExamFormData = {
   difficulty: 'facil' | 'medio' | 'dificil'
   style: 'regular' | 'enem' | 'homework'
   bloomLevel: string
+  questionCount: number
+  optionsCount: number
   useBncc: boolean
   selectedDocumentIds: string[]
   accessibility: {
@@ -33,6 +35,8 @@ const INITIAL_DATA: ExamFormData = {
   difficulty: 'medio',
   style: 'regular',
   bloomLevel: 'Aplicação',
+  questionCount: 8,
+  optionsCount: 4,
   useBncc: true,
   selectedDocumentIds: [],
   accessibility: { tea: false, dyslexia: false, adhd: false }
