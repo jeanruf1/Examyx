@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
     const examId   = searchParams.get('examId')
     const withKey  = searchParams.get('key') === 'true'
     const shuffle  = searchParams.get('shuffle') === 'true'
+    const type     = searchParams.get('type') // 'exam' ou 'pill'
 
     if (!examId) return NextResponse.json({ error: 'examId obrigatório' }, { status: 400 })
 
@@ -46,14 +47,24 @@ export async function GET(req: NextRequest) {
     const logoUrl: string | null = org?.logo_url ?? null
     const schoolName: string = org?.name ?? ''
 
-    const html = buildPDFHtml({
-      exam: shuffle ? { ...exam, title: `${exam.title} (Versão B)` } : exam,
-      questions: processedQuestions,
-      schoolName,
-      logoUrl,
-      headerFields,
-      withKey,
-    })
+    // ── Seleção de Template ────────────────────────────────────
+    let html = ''
+    if (type === 'pill') {
+      const pillData = exam.review_pill
+      if (!pillData) {
+        return NextResponse.json({ error: 'Pílula não gerada para esta prova' }, { status: 404 })
+      }
+      html = buildPillHtml({ exam, pill: pillData, schoolName })
+    } else {
+      html = buildPDFHtml({
+        exam: shuffle ? { ...exam, title: `${exam.title} (Versão B)` } : exam,
+        questions: processedQuestions,
+        schoolName,
+        logoUrl,
+        headerFields,
+        withKey,
+      })
+    }
 
     return new NextResponse(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
@@ -648,3 +659,152 @@ function shuffleArray<T>(array: T[]): T[] {
   }
   return newArray
 }
+
+function buildPillHtml({ exam, pill, schoolName }: any) {
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pílula: ${exam.title}</title>
+  <style>
+    @page { size: A4; margin: 0; }
+    @media print { 
+      .no-print { display: none !important; } 
+      body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; overflow: hidden !important; }
+    }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #fdfdfd; margin: 0; color: #1A1D2F; line-height: 1.4; font-size: 10pt; }
+    .container { max-width: 170mm; margin: 0 auto; padding: 10mm 0; }
+    
+    /* Header: Apple-style Card */
+    .header { 
+      background: #4F46E5; 
+      color: white; 
+      padding: 25pt 20pt; 
+      border-radius: 24pt; 
+      text-align: center;
+      margin-bottom: 20pt;
+      box-shadow: 0 10pt 25pt rgba(79, 70, 229, 0.1);
+      -webkit-print-color-adjust: exact;
+    }
+    .badge { text-transform: uppercase; letter-spacing: 0.2em; font-size: 7pt; font-weight: 700; opacity: 0.8; margin-bottom: 8pt; display: block; }
+    .title { font-size: 18pt; font-weight: 800; margin-bottom: 8pt; letter-spacing: -0.02em; line-height: 1.1; }
+    .subtitle { font-size: 9.5pt; opacity: 0.9; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6pt; }
+    .dot { width: 2.5pt; height: 2.5pt; background: white; border-radius: 50%; opacity: 0.4; }
+
+    /* Sections */
+    .section-label { 
+      font-size: 8.5pt; 
+      font-weight: 800; 
+      text-transform: uppercase; 
+      letter-spacing: 0.12em; 
+      color: #4F46E5; 
+      margin-bottom: 10pt; 
+      padding-left: 5pt;
+    }
+    
+    .grid { display: flex; flex-direction: column; gap: 8pt; margin-bottom: 25pt; }
+    
+    /* Concept Card: Softer design */
+    .card { 
+      background: #ffffff; 
+      border: 1pt solid #E9EAF2; 
+      border-radius: 16pt; 
+      padding: 10pt 15pt; 
+      display: flex; 
+      gap: 12pt; 
+      align-items: center;
+    }
+    .card-num { 
+      background: #F0F1FF; 
+      color: #4F46E5; 
+      width: 20pt; 
+      height: 20pt; 
+      border-radius: 8pt; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      font-size: 9pt; 
+      font-weight: 800; 
+      flex-shrink: 0;
+    }
+    .card-content { font-size: 10pt; font-weight: 600; color: #1A1D2F; line-height: 1.3; }
+
+    /* Tips Section */
+    .tips-box { margin-bottom: 25pt; padding: 0 10pt; }
+    .tip-item { 
+      display: flex; 
+      gap: 8pt; 
+      margin-bottom: 8pt; 
+      align-items: flex-start; 
+      font-size: 10pt; 
+      color: #4B5563; 
+    }
+    .tip-bullet { color: #10B981; font-weight: bold; font-size: 12pt; margin-top: -1pt; }
+
+    /* Challenge Box: More Elegant */
+    .challenge-box { 
+      background: #4F46E505; 
+      border: 1pt dashed #4F46E520; 
+      border-radius: 20pt; 
+      padding: 15pt 20pt; 
+      text-align: center;
+    }
+    .challenge-title { font-size: 8.5pt; font-weight: 800; color: #4F46E5; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6pt; }
+    .challenge-text { font-size: 10.5pt; color: #1A1D2F; font-weight: 600; line-height: 1.4; }
+
+    .no-print { 
+      position: fixed; top: 30px; right: 30px; background: #1A1D2F; color: white; 
+      padding: 12px 24px; border-radius: 50px; text-decoration: none; font-weight: bold; z-index: 100;
+      font-size: 13px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); transition: all 0.2s;
+    }
+    .no-print:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+  </style>
+</head>
+<body>
+  <a href="javascript:window.print()" class="no-print">🖨️ Salvar Pílula em PDF</a>
+  
+  <div class="container">
+    <div class="header">
+      <span class="badge">Pílula de Revisão</span>
+      <div class="title">${pill.title}</div>
+      <div class="subtitle">
+        ${schoolName} <div class="dot"></div> ${exam.subject} <div class="dot"></div> ${exam.grade}
+      </div>
+    </div>
+
+    <div class="section-label">
+      Conceitos Essenciais
+    </div>
+    <div class="grid">
+      ${(pill.essential_concepts || []).map((c: string, i: number) => `
+        <div class="card">
+          <div class="card-num">${i + 1}</div>
+          <div class="card-content">${c}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="tips-box">
+      <div class="section-label">Dicas de Mestre</div>
+      ${(pill.quick_tips || []).map((t: string) => `
+        <div class="tip-item">
+          <span class="tip-bullet">✓</span>
+          <span>${t}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="challenge-box">
+      <div class="challenge-title">Desafio de Reflexão</div>
+      <div class="challenge-text">${pill.challenge}</div>
+    </div>
+
+    <div style="margin-top: 50pt; text-align: center; font-size: 9pt; color: #8E94BB; opacity: 0.6;">
+      Material pedagógico exclusivo · Gerado via IA Examyx
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+import OpenAI from 'openai'

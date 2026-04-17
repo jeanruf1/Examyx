@@ -1,13 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { 
-  FilePlus2, FileText, ChevronRight, 
+  FileText, ChevronRight, 
   Search, SlidersHorizontal, 
   BrainCircuit, BookOpen, Clock,
   MoreVertical, Star, ArrowRight,
-  UploadCloud, Archive
+  Archive, Camera
 } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
+import DashboardActions from '@/components/dashboard/DashboardActions'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -49,16 +50,7 @@ export default async function DashboardPage() {
           <h1 className="text-[36px] font-bold text-[#1A1D2F] tracking-tight">Olá, {firstName}</h1>
           <p className="text-[#8E94BB] text-[16px]">{profile?.organizations?.name}</p>
         </div>
-        <div className="flex items-center gap-3 mt-4">
-          <Link href="/documentos" className="btn-rabbu-secondary h-12">
-            <UploadCloud className="w-4 h-4" />
-            Subir Materiais
-          </Link>
-          <Link href="/nova-prova" className="btn-rabbu h-12 px-8">
-            <FilePlus2 className="w-4 h-4" />
-            Gerar Nova Prova
-          </Link>
-        </div>
+        <DashboardActions />
       </div>
 
       {/* Stats Bar */}

@@ -22,6 +22,7 @@ interface Props {
 export default function StepContext({ form, onChange }: Props) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
+  const [uploading, setUploading] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -84,9 +85,46 @@ export default function StepContext({ form, onChange }: Props) {
 
       {/* RAG Section */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <BookOpen className="w-3.5 h-3.5 text-[#8E94BB]" />
-          <h3 className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-widest">Sua Biblioteca</h3>
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <BookOpen className="w-3.5 h-3.5 text-[#8E94BB]" />
+            <h3 className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-widest">Sua Biblioteca</h3>
+          </div>
+          
+          <label className="cursor-pointer">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#4F46E5] hover:opacity-70 transition-all uppercase tracking-widest">
+              {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+              {uploading ? 'Subindo...' : 'Subir Novo'}
+            </div>
+            <input 
+              type="file" 
+              className="hidden" 
+              accept=".pdf,.doc,.docx" 
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                setUploading(true)
+                const { data: { user } } = await supabase.auth.getUser()
+                await supabase.from('documents').insert({
+                  name: file.name,
+                  file_url: 'temp_url',
+                  type: 'pdf',
+                  file_size_bytes: file.size,
+                  is_indexed: true,
+                  teacher_id: user?.id,
+                  org_id: (await supabase.from('profiles').select('org_id').eq('id', user?.id).single()).data?.org_id
+                })
+                // Recarregar a lista (loadDocuments)
+                const { data } = await supabase
+                  .from('documents')
+                  .select('id, name, type, subject, created_at')
+                  .eq('is_indexed', true)
+                  .order('created_at', { ascending: false })
+                setDocuments(data || [])
+                setUploading(false)
+              }}
+            />
+          </label>
         </div>
 
         {loading ? (
