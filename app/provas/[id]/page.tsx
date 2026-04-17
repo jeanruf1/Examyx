@@ -11,6 +11,34 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
+// Estilos para impressão da pílula
+const PRINT_STYLES = `
+  @media print {
+    body * { visibility: hidden; }
+    .printable-pill, .printable-pill * { visibility: visible; }
+    .printable-pill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      box-shadow: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+    .no-print { display: none !important; }
+    .printable-pill .bg-[#4F46E5] {
+      background-color: #f3f4f6 !important;
+      color: #000 !important;
+      border-bottom: 2pt solid #000 !important;
+    }
+    .printable-pill .text-white\\/70 { color: #555 !important; }
+    .printable-pill .fill-white\\/20 { display: none !important; }
+    .printable-pill button { display: none !important; }
+  }
+`
+
 // Mapeador inverso para exibir Bloom em português no preview
 const BLOOM_PORTUGUESE: Record<string, string> = {
   memorization: 'Lembrar',
@@ -77,6 +105,7 @@ export default function ExamPreviewPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto animate-fade-in flex gap-8">
+      <style>{PRINT_STYLES}</style>
       
       {/* Left Side: Questions List */}
       <div className="flex-1 space-y-6 pb-20">
@@ -252,8 +281,8 @@ export default function ExamPreviewPage() {
 
         {/* Modal da Pílula de Revisão */}
         {pillData && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#1A1D2F]/60 backdrop-blur-sm animate-in fade-in duration-300">
-            <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#1A1D2F]/60 backdrop-blur-sm animate-in fade-in duration-300 no-print">
+            <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 printable-pill">
               <div className="bg-[#4F46E5] p-10 text-white relative">
                 <button 
                   onClick={() => setPillData(null)}
