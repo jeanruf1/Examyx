@@ -114,6 +114,11 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* List Header */}
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-[20px] font-bold text-[#1A1D2F]">Provas Recentes</h2>
+      </div>
+
       {/* Exam List */}
       <div className="space-y-4">
         {recentExams?.map(exam => (

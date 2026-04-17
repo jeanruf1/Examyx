@@ -27,15 +27,8 @@ export default function TopBar({ profile }: TopBarProps) {
         borderBottom: '1px solid rgba(0,0,0,0.06)',
       }}>
 
-      {/* Search */}
-      <div className="relative w-64">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-neutral-400" />
-        <input
-          type="search"
-          placeholder="Buscar..."
-          className="input pl-9 py-1.5 text-sm h-8"
-        />
-      </div>
+      {/* Left side empty or branding could go here if needed */}
+      <div />
 
       {/* Right */}
       <div className="flex items-center gap-1">
