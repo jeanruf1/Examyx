@@ -1,12 +1,12 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
 import {
   ChevronLeft, Wand2, Trash2, GripVertical,
-  Plus, Check, X, Loader2, RotateCcw,
+  Check, X, Loader2,
   CheckCircle2, Info, Brain, Save
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -52,6 +52,8 @@ function InlineEdit({
   const ref = useRef<HTMLTextAreaElement | HTMLInputElement>(null)
 
   useEffect(() => { if (editing) ref.current?.focus() }, [editing])
+  // Sync if value changes externally (e.g. after AI rewrite)
+  useEffect(() => { if (!editing) setDraft(value) }, [value, editing])
 
   function commit() {
     setEditing(false)
@@ -67,13 +69,15 @@ function InlineEdit({
     return (
       <span
         onClick={() => { setDraft(value); setEditing(true) }}
-        className={cn('cursor-text hover:bg-indigo-50/60 rounded-lg px-1 -mx-1 transition-colors group relative', className)}
+        className={cn(
+          // Subtle dashed underline on hover — no absolute labels overlapping
+          'cursor-text rounded-md transition-all',
+          'hover:outline hover:outline-2 hover:outline-dashed hover:outline-[#4F46E5]/30 hover:bg-indigo-50/40',
+          className
+        )}
         title="Clique para editar"
       >
         {value}
-        <span className="absolute -top-5 left-0 text-[9px] font-bold text-[#4F46E5] opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
-          editar
-        </span>
       </span>
     )
   }
@@ -86,14 +90,14 @@ function InlineEdit({
           value={draft}
           onChange={e => setDraft(e.target.value)}
           rows={4}
-          className="w-full border-2 border-[#4F46E5] rounded-xl p-3 text-[16px] font-semibold text-[#1A1D2F] leading-relaxed resize-none focus:outline-none focus:ring-0 bg-indigo-50/30"
+          className="w-full border-2 border-[#4F46E5] rounded-xl p-3 text-[16px] font-semibold text-[#1A1D2F] leading-relaxed resize-none focus:outline-none focus:ring-0 bg-indigo-50/20"
         />
       ) : (
         <input
           ref={ref as React.RefObject<HTMLInputElement>}
           value={draft}
           onChange={e => setDraft(e.target.value)}
-          className="w-full border-2 border-[#4F46E5] rounded-xl p-3 text-[14px] text-[#1A1D2F] focus:outline-none focus:ring-0 bg-indigo-50/30"
+          className="w-full border-2 border-[#4F46E5] rounded-xl p-3 text-[14px] text-[#1A1D2F] focus:outline-none focus:ring-0 bg-indigo-50/20"
         />
       )}
       <span className="flex items-center gap-2 mt-2">
@@ -176,7 +180,6 @@ function AIRewritePanel({
         <div className="absolute right-0 top-10 w-80 bg-white border border-[#E9EAF2] rounded-3xl shadow-2xl shadow-indigo-500/10 p-5 z-50 animate-in fade-in slide-in-from-top-2">
           <h4 className="text-[13px] font-bold text-[#1A1D2F] mb-3">Como reescrever?</h4>
 
-          {/* Presets rápidos */}
           <div className="flex flex-wrap gap-1.5 mb-4">
             {presets.map(p => (
               <button
@@ -240,6 +243,10 @@ function QuestionCard({
   onMoveUp,
   onMoveDown,
   saving,
+  isDragOver,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: {
   question: Question
   index: number
@@ -251,6 +258,10 @@ function QuestionCard({
   onMoveUp: () => void
   onMoveDown: () => void
   saving: boolean
+  isDragOver: boolean
+  onDragStart: () => void
+  onDragOver: (e: React.DragEvent) => void
+  onDrop: () => void
 }) {
   function updateField(field: keyof Question, value: any) {
     onUpdate({ ...question, [field]: value })
@@ -271,11 +282,21 @@ function QuestionCard({
   const isVF = question.type === 'true_false'
 
   return (
-    <div className="group p-8 rounded-[32px] bg-white border-2 border-[#E9EAF2] hover:border-[#4F46E5]/30 transition-all shadow-sm relative">
-
+    <div
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      className={cn(
+        'group p-8 rounded-[32px] bg-white border-2 transition-all shadow-sm relative',
+        isDragOver
+          ? 'border-[#4F46E5] bg-indigo-50/30 scale-[1.01] shadow-lg shadow-indigo-500/10'
+          : 'border-[#E9EAF2] hover:border-[#4F46E5]/30'
+      )}
+    >
       {/* Saving indicator */}
       {saving && (
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-16">
           <Loader2 className="w-4 h-4 text-[#4F46E5] animate-spin" />
         </div>
       )}
@@ -283,22 +304,25 @@ function QuestionCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-center gap-3">
-          {/* Drag handle + number */}
-          <div className="flex items-center gap-2">
-            <div className="cursor-grab active:cursor-grabbing text-[#D1D5DB] hover:text-[#8E94BB] transition-colors">
-              <GripVertical className="w-5 h-5" />
-            </div>
-            <span className="w-10 h-10 rounded-2xl bg-[#F8F9FE] text-[#1A1D2F] flex items-center justify-center font-extrabold text-lg border border-[#E9EAF2] group-hover:bg-[#4F46E5] group-hover:text-white transition-all">
-              {index + 1}
-            </span>
+          {/* Drag handle — agora funcional */}
+          <div
+            className="cursor-grab active:cursor-grabbing text-[#C4C9E2] hover:text-[#4F46E5] transition-colors p-1 rounded-lg hover:bg-indigo-50"
+            title="Arraste para reordenar"
+          >
+            <GripVertical className="w-5 h-5" />
           </div>
 
-          {/* Move up / down */}
+          <span className="w-10 h-10 rounded-2xl bg-[#F8F9FE] text-[#1A1D2F] flex items-center justify-center font-extrabold text-lg border border-[#E9EAF2] group-hover:bg-[#4F46E5] group-hover:text-white transition-all">
+            {index + 1}
+          </span>
+
+          {/* Move up / down — para quem preferir clicar */}
           <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={onMoveUp}
               disabled={index === 0}
               className="w-5 h-5 rounded-md bg-neutral-100 flex items-center justify-center disabled:opacity-30 hover:bg-neutral-200 transition-colors"
+              title="Mover para cima"
             >
               <ChevronLeft className="w-3 h-3 rotate-90" />
             </button>
@@ -306,6 +330,7 @@ function QuestionCard({
               onClick={onMoveDown}
               disabled={index === total - 1}
               className="w-5 h-5 rounded-md bg-neutral-100 flex items-center justify-center disabled:opacity-30 hover:bg-neutral-200 transition-colors"
+              title="Mover para baixo"
             >
               <ChevronLeft className="w-3 h-3 -rotate-90" />
             </button>
@@ -313,7 +338,7 @@ function QuestionCard({
         </div>
 
         {/* Right actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
           {question.bloom_level && (
             <span className="px-3 py-1.5 bg-neutral-100 text-[#8E94BB] text-[10px] font-bold rounded-full uppercase tracking-widest">
               {BLOOM_PORTUGUESE[question.bloom_level] || question.bloom_level}
@@ -335,6 +360,7 @@ function QuestionCard({
           <button
             onClick={onDelete}
             className="flex items-center gap-1 px-3 py-1.5 rounded-full text-[11px] font-bold bg-red-50 text-red-400 border border-red-100 hover:bg-red-100 hover:text-red-600 transition-all opacity-0 group-hover:opacity-100"
+            title="Remover questão"
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -377,7 +403,6 @@ function QuestionCard({
                 {isVF ? (opt.text === 'Verdadeiro' ? 'V' : 'F') : opt.letter}
               </button>
 
-              {/* Option text — inline editable */}
               <span className={cn(
                 'flex-1 text-[14px] leading-snug',
                 opt.is_correct ? 'text-emerald-700 font-bold' : 'text-[#1A1D2F] font-medium'
@@ -405,13 +430,13 @@ function QuestionCard({
             <Info className="w-3.5 h-3.5" />
             <span className="text-[10px] font-bold uppercase tracking-wider">Gabarito Comentado</span>
           </div>
-          <p className="text-[13px] text-[#8E94BB] leading-relaxed">
+          <div className="text-[13px] text-[#8E94BB] leading-relaxed">
             <InlineEdit
               value={question.explanation}
               onSave={v => updateField('explanation', v)}
               multiline
             />
-          </p>
+          </div>
         </div>
       )}
     </div>
@@ -423,7 +448,6 @@ function QuestionCard({
 // ─────────────────────────────────────────────
 export default function ExamEditorPage() {
   const { id } = useParams()
-  const router = useRouter()
   const supabase = createClient()
 
   const [exam, setExam] = useState<any>(null)
@@ -432,6 +456,10 @@ export default function ExamEditorPage() {
   const [savingId, setSavingId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Drag state
+  const dragIndex = useRef<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -454,7 +482,7 @@ export default function ExamEditorPage() {
     load()
   }, [id])
 
-  // Auto-save com debounce ao atualizar questão
+  // Auto-save com debounce
   async function handleUpdateQuestion(updated: Question) {
     setQuestions(prev => prev.map(q => q.id === updated.id ? updated : q))
     setSavingId(updated.id)
@@ -495,8 +523,37 @@ export default function ExamEditorPage() {
     const targetIndex = direction === 'up' ? index - 1 : index + 1
     if (targetIndex < 0 || targetIndex >= newList.length) return
     ;[newList[index], newList[targetIndex]] = [newList[targetIndex], newList[index]]
+    persistOrder(newList)
+  }
+
+  // ── Drag & Drop handlers ──────────────────────
+  function handleDragStart(index: number) {
+    dragIndex.current = index
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault()
+    setDragOverIndex(index)
+  }
+
+  function handleDrop(dropIndex: number) {
+    const fromIndex = dragIndex.current
+    if (fromIndex === null || fromIndex === dropIndex) {
+      setDragOverIndex(null)
+      dragIndex.current = null
+      return
+    }
+    const newList = [...questions]
+    const [moved] = newList.splice(fromIndex, 1)
+    newList.splice(dropIndex, 0, moved)
+    persistOrder(newList)
+    dragIndex.current = null
+    setDragOverIndex(null)
+  }
+
+  function persistOrder(newList: Question[]) {
     setQuestions(newList)
-    // Salva os order_index atualizados
+    // Persiste order_index no banco
     newList.forEach(async (q, i) => {
       await supabase.from('questions').update({ order_index: i }).eq('id', q.id)
     })
@@ -514,18 +571,14 @@ export default function ExamEditorPage() {
   }
 
   if (!exam) {
-    return (
-      <div className="p-20 text-center text-[#8E94BB]">
-        Prova não encontrada
-      </div>
-    )
+    return <div className="p-20 text-center text-[#8E94BB]">Prova não encontrada</div>
   }
 
   return (
     <div className="max-w-4xl mx-auto pb-20 animate-fade-in">
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-10 sticky top-0 bg-[#F8F9FE]/90 backdrop-blur-sm py-4 z-30">
+      {/* Sticky Header */}
+      <div className="flex items-center justify-between mb-10 sticky top-0 bg-[#F8F9FE]/90 backdrop-blur-sm py-4 z-30 border-b border-[#E9EAF2]">
         <div className="flex items-center gap-4">
           <Link
             href={`/provas/${id}`}
@@ -535,19 +588,18 @@ export default function ExamEditorPage() {
             Voltar
           </Link>
           <div>
-            <h1 className="text-[22px] font-extrabold text-[#1A1D2F] tracking-tight">{exam.title}</h1>
-            <p className="text-[13px] text-[#8E94BB]">{questions.length} questões · {exam.subject} · {exam.grade}</p>
+            <h1 className="text-[20px] font-extrabold text-[#1A1D2F] tracking-tight">{exam.title}</h1>
+            <p className="text-[12px] text-[#8E94BB]">{questions.length} questões · {exam.subject} · {exam.grade}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Save status */}
           <div className={cn(
             'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all',
             saveStatus === 'saving' ? 'bg-amber-50 text-amber-600' :
             saveStatus === 'saved'  ? 'bg-emerald-50 text-emerald-600' :
             saveStatus === 'error'  ? 'bg-red-50 text-red-500' :
-            'opacity-0'
+            'opacity-0 pointer-events-none'
           )}>
             {saveStatus === 'saving' && <><Loader2 className="w-3 h-3 animate-spin" /> Salvando...</>}
             {saveStatus === 'saved'  && <><Check className="w-3 h-3" /> Salvo</>}
@@ -564,17 +616,19 @@ export default function ExamEditorPage() {
         </div>
       </div>
 
-      {/* Tip */}
+      {/* Tip bar */}
       <div className="flex items-center gap-3 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 mb-8">
         <Brain className="w-4 h-4 text-[#4F46E5] shrink-0" />
         <p className="text-[13px] text-[#4F46E5]/80">
-          <strong>Modo de Edição</strong> — Clique em qualquer texto para editar inline. Use o botão
-          {' '}<em>Reescrever com IA</em> para pedir à IA que ajuste o nível ou linguagem da questão.
+          <strong>Modo de Edição</strong> — Clique em qualquer texto para editar. Arraste os <strong>⠿</strong> para reordenar. Use <em>Reescrever com IA</em> para ajustar nível ou linguagem.
         </p>
       </div>
 
-      {/* Questions */}
-      <div className="space-y-5">
+      {/* Questions list */}
+      <div
+        className="space-y-5"
+        onDragEnd={() => setDragOverIndex(null)}
+      >
         {questions.map((q, idx) => (
           <QuestionCard
             key={q.id}
@@ -588,14 +642,17 @@ export default function ExamEditorPage() {
             onMoveUp={() => moveQuestion(idx, 'up')}
             onMoveDown={() => moveQuestion(idx, 'down')}
             saving={savingId === q.id}
+            isDragOver={dragOverIndex === idx}
+            onDragStart={() => handleDragStart(idx)}
+            onDragOver={e => handleDragOver(e, idx)}
+            onDrop={() => handleDrop(idx)}
           />
         ))}
       </div>
 
-      {/* Rodapé de status */}
       <div className="mt-10 text-center">
-        <p className="text-[13px] text-[#8E94BB]">
-          {questions.length} questões • Edições salvas automaticamente
+        <p className="text-[12px] text-[#C4C9E2]">
+          {questions.length} questões · Edições salvas automaticamente
         </p>
       </div>
     </div>
