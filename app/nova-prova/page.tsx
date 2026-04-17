@@ -94,6 +94,8 @@ export default function NovaProvaPage() {
     }
   }
 
+  const totalQuestions = Object.values(form.questionMix).reduce((a, b) => a + b, 0)
+
   return (
     <div className="max-w-[1000px] mx-auto pb-20 animate-fade-in relative">
       
@@ -155,7 +157,7 @@ export default function NovaProvaPage() {
              {step === 4 && (
                <StepGenerate 
                  form={form} 
-                 totalQuestions={8} 
+                 totalQuestions={totalQuestions} 
                  generating={generating} 
                  result={result}
                  error={error}
