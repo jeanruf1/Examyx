@@ -77,67 +77,67 @@ export default function NovaProvaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FE] text-[#1A1D2F] selection:bg-[#4F46E5]/10">
+    <div className="fixed inset-0 bg-[#F8F9FE] text-[#1A1D2F] z-[100] overflow-y-auto selection:bg-[#4F46E5]/10">
       
-      {/* Top Navigation */}
-      <nav className="fixed top-0 left-0 w-full p-8 flex items-center justify-between z-50">
-        <Link href="/dashboard" className="w-12 h-12 rounded-full bg-white shadow-sm border border-[#E9EAF2] flex items-center justify-center hover:scale-110 transition-all text-[#8E94BB] hover:text-[#4F46E5]">
+      {/* Top Bar - Minimalist */}
+      <nav className="absolute top-0 left-0 w-full p-8 flex items-center justify-between pointer-events-none">
+        <Link href="/dashboard" className="w-10 h-10 rounded-full bg-white shadow-sm border border-[#E9EAF2] flex items-center justify-center hover:scale-110 transition-all text-[#8E94BB] hover:text-[#4F46E5] pointer-events-auto">
           <ChevronLeft className="w-5 h-5" />
         </Link>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#4F46E5] flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-            <Sparkles className="w-5 h-5 fill-current" />
-          </div>
-          <span className="font-bold text-xl tracking-tight">Examyx</span>
+        <div className="flex items-center gap-2 opacity-50">
+          <Sparkles className="w-4 h-4 text-[#4F46E5]" />
+          <span className="font-bold text-sm tracking-tight">Examyx Wizard</span>
         </div>
-        <div className="w-12" /> {/* Spacer */}
+        <div className="w-10" />
       </nav>
 
-      {/* Main Wizard Content */}
-      <div className="max-w-4xl mx-auto pt-40 pb-20 px-6">
+      {/* Center Focused Content */}
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-20">
         
-        {/* Progress Indicator (Apple Style) */}
-        <div className="flex items-center justify-center gap-2 mb-12">
+        {/* Progress Dots */}
+        <div className="flex items-center gap-1.5 mb-10">
           {STEPS.map((s) => (
             <div
               key={s.id}
               className={cn(
-                "h-1.5 rounded-full transition-all duration-500",
-                step === s.id ? "w-12 bg-[#4F46E5]" : step > s.id ? "w-4 bg-emerald-500" : "w-4 bg-[#E9EAF2]"
+                "h-1 rounded-full transition-all duration-500",
+                step === s.id ? "w-8 bg-[#4F46E5]" : step > s.id ? "w-2 bg-emerald-500" : "w-2 bg-[#E9EAF2]"
               )}
             />
           ))}
         </div>
 
-        {/* Step Transition Wrapper */}
-        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-           {step === 1 && (
-             <div className="text-center mb-16">
-               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Vamos começar.</h1>
-               <p className="text-xl text-[#8E94BB]">Defina a base da sua nova avaliação.</p>
-             </div>
-           )}
-           {step === 2 && (
-             <div className="text-center mb-16">
-               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Dê contexto à IA.</h1>
-               <p className="text-xl text-[#8E94BB]">Escolha entre a BNCC ou seus próprios materiais.</p>
-             </div>
-           )}
-           {step === 3 && (
-             <div className="text-center mb-16">
-               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Inclusão para todos.</h1>
-               <p className="text-xl text-[#8E94BB]">Adapte a linguagem para necessidades específicas.</p>
-             </div>
-           )}
-           {step === 4 && (
-             <div className="text-center mb-16">
-               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Tudo pronto.</h1>
-               <p className="text-xl text-[#8E94BB]">Revise as configurações antes de gerar.</p>
-             </div>
-           )}
+        <div className="w-full max-w-3xl mx-auto">
+           {/* Step Headers - Adjusted Scale */}
+           <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+             {step === 1 && (
+               <>
+                 <h1 className="text-4xl font-extrabold tracking-tight mb-3">Vamos começar.</h1>
+                 <p className="text-lg text-[#8E94BB]">Defina a base da sua nova avaliação.</p>
+               </>
+             )}
+             {step === 2 && (
+               <>
+                 <h1 className="text-4xl font-extrabold tracking-tight mb-3">Dê contexto à IA.</h1>
+                 <p className="text-lg text-[#8E94BB]">Escolha entre a BNCC ou seus próprios materiais.</p>
+               </>
+             )}
+             {step === 3 && (
+               <>
+                 <h1 className="text-4xl font-extrabold tracking-tight mb-3">Inclusão para todos.</h1>
+                 <p className="text-lg text-[#8E94BB]">Adapte a linguagem para necessidades específicas.</p>
+               </>
+             )}
+             {step === 4 && (
+               <>
+                 <h1 className="text-4xl font-extrabold tracking-tight mb-3">Tudo pronto.</h1>
+                 <p className="text-lg text-[#8E94BB]">Revise as configurações antes de gerar.</p>
+               </>
+             )}
+           </div>
 
            {/* Step Content */}
-           <div className="mb-20">
+           <div className="mb-12">
              {step === 1 && <StepConfig form={form} onChange={updateForm} />}
              {step === 2 && <StepContext form={form} onChange={updateForm} />}
              {step === 3 && <StepAccessibility form={form} onChange={updateForm} />}
@@ -153,40 +153,40 @@ export default function NovaProvaPage() {
                />
              )}
            </div>
-
-           {/* Actions */}
-           {!result && !generating && (
-             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
-               {step > 1 && (
-                 <button
-                   onClick={() => setStep(s => s - 1)}
-                   className="w-16 h-16 rounded-full bg-white border border-[#E9EAF2] flex items-center justify-center text-[#8E94BB] hover:text-[#4F46E5] hover:scale-105 transition-all shadow-sm"
-                 >
-                   <ArrowLeft className="w-6 h-6" />
-                 </button>
-               )}
-               
-               {step < 4 ? (
-                 <button
-                   onClick={() => setStep(s => s + 1)}
-                   disabled={step === 1 && (!form.subject || !form.grade || !form.theme)}
-                   className="h-16 px-12 rounded-full bg-[#4F46E5] text-white font-bold text-lg flex items-center gap-3 hover:bg-[#3F37C9] hover:scale-105 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 disabled:scale-100"
-                 >
-                   Próximo Passo
-                   <ArrowRight className="w-6 h-6" />
-                 </button>
-               ) : (
-                 <button
-                   onClick={handleGenerate}
-                   className="h-16 px-12 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center gap-3 hover:bg-emerald-700 hover:scale-105 transition-all shadow-xl shadow-emerald-500/20"
-                 >
-                   Gerar Avaliação
-                   <Sparkles className="w-6 h-6" />
-                 </button>
-               )}
-             </div>
-           )}
         </div>
+
+        {/* Fixed Bottom Actions - Better positioning */}
+        {!result && !generating && (
+           <div className="mt-8 flex items-center gap-4">
+             {step > 1 && (
+               <button
+                 onClick={() => setStep(s => s - 1)}
+                 className="w-14 h-14 rounded-full bg-white border border-[#E9EAF2] flex items-center justify-center text-[#8E94BB] hover:text-[#4F46E5] hover:scale-105 transition-all shadow-sm"
+               >
+                 <ArrowLeft className="w-5 h-5" />
+               </button>
+             )}
+             
+             {step < 4 ? (
+               <button
+                 onClick={() => setStep(s => s + 1)}
+                 disabled={step === 1 && (!form.subject || !form.grade || !form.theme)}
+                 className="h-14 px-10 rounded-full bg-[#4F46E5] text-white font-bold text-base flex items-center gap-3 hover:bg-[#3F37C9] hover:scale-105 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 disabled:scale-100"
+               >
+                 Próximo Passo
+                 <ArrowRight className="w-5 h-5" />
+               </button>
+             ) : (
+               <button
+                 onClick={handleGenerate}
+                 className="h-14 px-10 rounded-full bg-emerald-600 text-white font-bold text-base flex items-center gap-3 hover:bg-emerald-700 hover:scale-105 transition-all shadow-xl shadow-emerald-500/20"
+               >
+                 Gerar Avaliação
+                 <Sparkles className="w-5 h-5" />
+               </button>
+             )}
+           </div>
+        )}
       </div>
     </div>
   )
