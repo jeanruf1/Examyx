@@ -2,7 +2,7 @@
 
 import type { ExamFormData } from '../page'
 import { cn } from '@/lib/utils'
-import { BookOpen, GraduationCap, Lightbulb, Target, Sparkles } from 'lucide-react'
+import { BookOpen, GraduationCap, Target } from 'lucide-react'
 
 const SUBJECTS = [
   'Matemática', 'Língua Portuguesa', 'Ciências', 'História', 'Geografia', 
@@ -27,119 +27,98 @@ interface Props {
 
 export default function StepConfig({ form, onChange }: Props) {
   return (
-    <div className="space-y-10 animate-fade-in">
+    <div className="space-y-16 animate-fade-in max-w-3xl mx-auto">
       
-      {/* Subject & Grade Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-3">
-          <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider flex items-center gap-2">
-            <BookOpen className="w-3.5 h-3.5 text-[#4F46E5]" />
-            Disciplina
-          </label>
-          <select 
-            value={form.subject}
-            onChange={(e) => onChange({ subject: e.target.value })}
-            className="search-input h-14 bg-[#F8F9FE] border-transparent focus:bg-white focus:border-[#4F46E5]"
-          >
-            <option value="">Selecione a matéria</option>
-            {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-
-        <div className="space-y-3">
-          <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider flex items-center gap-2">
-            <GraduationCap className="w-3.5 h-3.5 text-[#4F46E5]" />
-            Série / Ano
-          </label>
-          <select 
-            value={form.grade}
-            onChange={(e) => onChange({ grade: e.target.value })}
-            className="search-input h-14 bg-[#F8F9FE] border-transparent focus:bg-white focus:border-[#4F46E5]"
-          >
-            <option value="">Selecione o ano</option>
-            {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
-          </select>
-        </div>
-      </div>
-
-      {/* Theme Input */}
-      <div className="space-y-3">
-        <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider flex items-center gap-2">
-          <Target className="w-3.5 h-3.5 text-[#4F46E5]" />
-          Tema da Avaliação
-        </label>
-        <input 
-          type="text"
-          placeholder="Ex: Revolução Industrial, Equações de 2º Grau, Fotossíntese..."
-          value={form.theme}
-          onChange={(e) => onChange({ theme: e.target.value })}
-          className="search-input h-14 bg-[#F8F9FE] border-transparent focus:bg-white focus:border-[#4F46E5]"
-        />
-        <p className="text-[11px] text-[#8E94BB] italic font-medium">Quanto mais específico, mais precisos serão os enunciados.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-        {/* Difficulty Selector */}
+      {/* Subject & Grade - Floating Duo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
         <div className="space-y-4">
-          <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider flex items-center gap-2">
-             <Sparkles className="w-3.5 h-3.5 text-[#4F46E5]" />
-             Nível de Dificuldade
-          </label>
-          <div className="flex bg-[#F8F9FE] p-1.5 rounded-[18px] gap-2 border border-[#E9EAF2]">
-            {(['facil', 'medio', 'dificil'] as const).map(d => (
-              <button
-                key={d}
-                onClick={() => onChange({ difficulty: d })}
-                className={cn(
-                  "flex-1 py-3 px-4 rounded-[14px] text-xs font-bold transition-all uppercase tracking-widest",
-                  form.difficulty === d 
-                    ? "bg-white text-[#4F46E5] shadow-sm ring-1 ring-[#E9EAF2]" 
-                    : "text-[#8E94BB] hover:text-[#4F46E5]"
-                )}
-              >
-                {d === 'facil' ? 'Fácil' : d === 'medio' ? 'Médio' : 'Difícil'}
-              </button>
-            ))}
+          <label className="text-xs font-bold text-[#8E94BB] uppercase tracking-[0.2em] px-1">Disciplina</label>
+          <div className="relative group">
+            <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4F46E5] group-focus-within:scale-110 transition-transform" />
+            <select 
+              value={form.subject}
+              onChange={(e) => onChange({ subject: e.target.value })}
+              className="w-full h-20 pl-16 pr-6 bg-white border border-[#E9EAF2] rounded-[32px] text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-[#4F46E5]/5 focus:border-[#4F46E5] transition-all appearance-none shadow-sm"
+            >
+              <option value="">Selecione...</option>
+              {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
           </div>
         </div>
 
-        {/* Style Selector */}
         <div className="space-y-4">
-          <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider flex items-center gap-2">
-             <Lightbulb className="w-3.5 h-3.5 text-[#4F46E5]" />
-             Taxonomia de Bloom
-          </label>
+          <label className="text-xs font-bold text-[#8E94BB] uppercase tracking-[0.2em] px-1">Série / Ano</label>
+          <div className="relative group">
+            <GraduationCap className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4F46E5] group-focus-within:scale-110 transition-transform" />
+            <select 
+              value={form.grade}
+              onChange={(e) => onChange({ grade: e.target.value })}
+              className="w-full h-20 pl-16 pr-6 bg-white border border-[#E9EAF2] rounded-[32px] text-lg font-semibold focus:outline-none focus:ring-4 focus:ring-[#4F46E5]/5 focus:border-[#4F46E5] transition-all appearance-none shadow-sm"
+            >
+              <option value="">Selecione...</option>
+              {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Theme - The Big Input */}
+      <div className="space-y-4">
+        <label className="text-xs font-bold text-[#8E94BB] uppercase tracking-[0.2em] px-1 text-center block">Qual o tema central?</label>
+        <div className="relative group">
+          <Target className="absolute left-8 top-1/2 -translate-y-1/2 w-6 h-6 text-[#4F46E5] group-focus-within:scale-110 transition-transform" />
+          <input 
+            type="text"
+            placeholder="Ex: Mitocôndrias e respiração celular..."
+            value={form.theme}
+            onChange={(e) => onChange({ theme: e.target.value })}
+            className="w-full h-24 pl-20 pr-8 bg-white border border-[#E9EAF2] rounded-[40px] text-2xl font-bold placeholder:text-neutral-200 focus:outline-none focus:ring-4 focus:ring-[#4F46E5]/5 focus:border-[#4F46E5] transition-all shadow-sm text-center"
+          />
+        </div>
+      </div>
+
+      {/* Secondary Configs - Glass Pills */}
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <div className="bg-white/50 backdrop-blur-sm border border-[#E9EAF2] p-2 rounded-full flex gap-1">
+          {(['facil', 'medio', 'dificil'] as const).map(d => (
+            <button
+              key={d}
+              onClick={() => onChange({ difficulty: d })}
+              className={cn(
+                "px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
+                form.difficulty === d ? "bg-[#4F46E5] text-white shadow-lg" : "text-[#8E94BB] hover:bg-white"
+              )}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white/50 backdrop-blur-sm border border-[#E9EAF2] p-2 rounded-full flex gap-1">
+          {(['regular', 'enem', 'homework'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => onChange({ style: s })}
+              className={cn(
+                "px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all",
+                form.style === s ? "bg-[#4F46E5] text-white shadow-lg" : "text-[#8E94BB] hover:bg-white"
+              )}
+            >
+              {s === 'regular' ? 'Padrão' : s === 'enem' ? 'ENEM' : 'Dever'}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-white/50 backdrop-blur-sm border border-[#E9EAF2] pl-6 pr-2 py-2 rounded-full flex items-center gap-3">
+          <span className="text-[11px] font-bold text-[#8E94BB] uppercase tracking-widest">Bloom:</span>
           <select 
             value={form.bloomLevel}
             onChange={(e) => onChange({ bloomLevel: e.target.value })}
-            className="search-input h-14 bg-[#F8F9FE] border-transparent focus:bg-white focus:border-[#4F46E5]"
+            className="bg-white border border-[#E9EAF2] rounded-full px-4 py-1 text-[11px] font-bold text-[#4F46E5] focus:outline-none"
           >
             {BLOOM_LEVELS.map(b => <option key={b} value={b}>{b}</option>)}
           </select>
         </div>
-      </div>
-
-      {/* Style Toggle (ENEM / Regular) */}
-      <div className="space-y-4">
-          <label className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-wider">Estilo de Enunciado</label>
-          <div className="grid grid-cols-3 gap-3">
-             {(['regular', 'enem', 'homework'] as const).map(s => (
-               <button
-                 key={s}
-                 onClick={() => onChange({ style: s })}
-                 className={cn(
-                   "py-4 px-6 rounded-2xl border transition-all text-center flex flex-col items-center gap-2",
-                   form.style === s 
-                    ? "border-[#4F46E5] bg-[#F5F5FF] text-[#4F46E5]" 
-                    : "border-[#E9EAF2] bg-white text-[#8E94BB] hover:border-[#8E94BB]"
-                 )}
-               >
-                 <span className="text-xs font-bold uppercase tracking-widest">
-                   {s === 'regular' ? 'Tradicional' : s === 'enem' ? 'Estilo ENEM' : 'Dever de Casa'}
-                 </span>
-               </button>
-             ))}
-          </div>
       </div>
 
     </div>

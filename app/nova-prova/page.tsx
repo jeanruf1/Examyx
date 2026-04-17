@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Sparkles, Check } from 'lucide-react'
+import { ChevronLeft, Sparkles, Check, ArrowRight, ArrowLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import StepConfig from './steps/StepConfig'
 import StepContext from './steps/StepContext'
@@ -39,10 +39,10 @@ const INITIAL_DATA: ExamFormData = {
 }
 
 const STEPS = [
-  { id: 1, name: 'Configuração', description: 'Base da prova' },
-  { id: 2, name: 'Contexto', description: 'BNCC e Materiais' },
-  { id: 3, name: 'Acessibilidade', description: 'Inclusão' },
-  { id: 4, name: 'Gerar', description: 'Finalização' },
+  { id: 1, name: 'Configuração' },
+  { id: 2, name: 'Contexto' },
+  { id: 3, name: 'Acessibilidade' },
+  { id: 4, name: 'Gerar' },
 ]
 
 export default function NovaProvaPage() {
@@ -77,102 +77,115 @@ export default function NovaProvaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FE] pb-20">
-      {/* Header Fixo */}
-      <header className="bg-white border-b border-[#E9EAF2] h-20 flex items-center sticky top-0 z-50">
-        <div className="max-w-[1200px] mx-auto w-full px-6 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2 text-[14px] font-bold text-[#8E94BB] hover:text-[#4F46E5] transition-colors">
-            <ChevronLeft className="w-4 h-4" />
-            Voltar ao Dashboard
-          </Link>
-          <div className="flex items-center gap-3">
-             <div className="w-8 h-8 rounded-lg bg-[#4F46E5] flex items-center justify-center text-white">
-                <Sparkles className="w-4 h-4 fill-current" />
-             </div>
-             <span className="font-bold text-[#1A1D2F]">Examyx - Criador de Avaliações</span>
+    <div className="min-h-screen bg-[#F8F9FE] text-[#1A1D2F] selection:bg-[#4F46E5]/10">
+      
+      {/* Top Navigation */}
+      <nav className="fixed top-0 left-0 w-full p-8 flex items-center justify-between z-50">
+        <Link href="/dashboard" className="w-12 h-12 rounded-full bg-white shadow-sm border border-[#E9EAF2] flex items-center justify-center hover:scale-110 transition-all text-[#8E94BB] hover:text-[#4F46E5]">
+          <ChevronLeft className="w-5 h-5" />
+        </Link>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#4F46E5] flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
+            <Sparkles className="w-5 h-5 fill-current" />
           </div>
-          <div className="w-[140px]" /> {/* Spacer */}
+          <span className="font-bold text-xl tracking-tight">Examyx</span>
         </div>
-      </header>
+        <div className="w-12" /> {/* Spacer */}
+      </nav>
 
-      <div className="max-w-[800px] mx-auto pt-12 px-6">
-        {/* Stepper Premium */}
-        <div className="mb-12">
-          <div className="flex justify-between items-center relative">
-            <div className="absolute left-0 top-[18px] w-full h-[2px] bg-[#E9EAF2] -z-10" />
-            {STEPS.map((s) => (
-              <div key={s.id} className="flex flex-col items-center gap-3">
-                <div className={cn(
-                  "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 border-2",
-                  step === s.id 
-                    ? "bg-[#4F46E5] border-[#4F46E5] text-white shadow-lg shadow-indigo-500/30 scale-110" 
-                    : step > s.id 
-                      ? "bg-emerald-500 border-emerald-500 text-white" 
-                      : "bg-white border-[#E9EAF2] text-[#8E94BB]"
-                )}>
-                  {step > s.id ? <Check className="w-5 h-5" /> : s.id}
-                </div>
-                <div className="text-center">
-                  <p className={cn("text-[13px] font-bold", step === s.id ? "text-[#1A1D2F]" : "text-[#8E94BB]")}>
-                    {s.name}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Wizard Card Content */}
-        <div className="rabbu-card p-10 min-h-[500px] flex flex-col">
-          <div className="flex-1">
-            {step === 1 && <StepConfig form={form} onChange={updateForm} />}
-            {step === 2 && <StepContext form={form} onChange={updateForm} />}
-            {step === 3 && <StepAccessibility form={form} onChange={updateForm} />}
-            {step === 4 && (
-              <StepGenerate 
-                form={form} 
-                totalQuestions={8} 
-                generating={generating} 
-                result={result}
-                error={error}
-                onGenerate={handleGenerate}
-                onGoToExam={() => router.push(`/provas/${result?.examId}`)}
-              />
-            )}
-          </div>
-
-          {/* Navigation Buttons */}
-          {!result && !generating && (
-            <div className="flex items-center justify-between mt-12 pt-8 border-t border-[#F0F1F7]">
-              <button
-                disabled={step === 1}
-                onClick={() => setStep(s => s - 1)}
-                className={cn(
-                  "btn-rabbu-secondary px-8",
-                  step === 1 && "opacity-0 pointer-events-none"
-                )}
-              >
-                Anterior
-              </button>
-              
-              {step < 4 ? (
-                <button
-                  onClick={() => setStep(s => s + 1)}
-                  disabled={step === 1 && (!form.subject || !form.grade || !form.theme)}
-                  className="btn-rabbu px-10 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Próximo Passo
-                </button>
-              ) : (
-                <button
-                  onClick={handleGenerate}
-                  className="btn-rabbu px-10 bg-emerald-600 hover:bg-emerald-700"
-                >
-                  Gerar Prova Agora
-                </button>
+      {/* Main Wizard Content */}
+      <div className="max-w-4xl mx-auto pt-40 pb-20 px-6">
+        
+        {/* Progress Indicator (Apple Style) */}
+        <div className="flex items-center justify-center gap-2 mb-12">
+          {STEPS.map((s) => (
+            <div
+              key={s.id}
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-500",
+                step === s.id ? "w-12 bg-[#4F46E5]" : step > s.id ? "w-4 bg-emerald-500" : "w-4 bg-[#E9EAF2]"
               )}
-            </div>
-          )}
+            />
+          ))}
+        </div>
+
+        {/* Step Transition Wrapper */}
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
+           {step === 1 && (
+             <div className="text-center mb-16">
+               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Vamos começar.</h1>
+               <p className="text-xl text-[#8E94BB]">Defina a base da sua nova avaliação.</p>
+             </div>
+           )}
+           {step === 2 && (
+             <div className="text-center mb-16">
+               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Dê contexto à IA.</h1>
+               <p className="text-xl text-[#8E94BB]">Escolha entre a BNCC ou seus próprios materiais.</p>
+             </div>
+           )}
+           {step === 3 && (
+             <div className="text-center mb-16">
+               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Inclusão para todos.</h1>
+               <p className="text-xl text-[#8E94BB]">Adapte a linguagem para necessidades específicas.</p>
+             </div>
+           )}
+           {step === 4 && (
+             <div className="text-center mb-16">
+               <h1 className="text-5xl font-extrabold tracking-tight mb-4">Tudo pronto.</h1>
+               <p className="text-xl text-[#8E94BB]">Revise as configurações antes de gerar.</p>
+             </div>
+           )}
+
+           {/* Step Content */}
+           <div className="mb-20">
+             {step === 1 && <StepConfig form={form} onChange={updateForm} />}
+             {step === 2 && <StepContext form={form} onChange={updateForm} />}
+             {step === 3 && <StepAccessibility form={form} onChange={updateForm} />}
+             {step === 4 && (
+               <StepGenerate 
+                 form={form} 
+                 totalQuestions={8} 
+                 generating={generating} 
+                 result={result}
+                 error={error}
+                 onGenerate={handleGenerate}
+                 onGoToExam={() => router.push(`/provas/${result?.examId}`)}
+               />
+             )}
+           </div>
+
+           {/* Actions */}
+           {!result && !generating && (
+             <div className="fixed bottom-12 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
+               {step > 1 && (
+                 <button
+                   onClick={() => setStep(s => s - 1)}
+                   className="w-16 h-16 rounded-full bg-white border border-[#E9EAF2] flex items-center justify-center text-[#8E94BB] hover:text-[#4F46E5] hover:scale-105 transition-all shadow-sm"
+                 >
+                   <ArrowLeft className="w-6 h-6" />
+                 </button>
+               )}
+               
+               {step < 4 ? (
+                 <button
+                   onClick={() => setStep(s => s + 1)}
+                   disabled={step === 1 && (!form.subject || !form.grade || !form.theme)}
+                   className="h-16 px-12 rounded-full bg-[#4F46E5] text-white font-bold text-lg flex items-center gap-3 hover:bg-[#3F37C9] hover:scale-105 transition-all shadow-xl shadow-indigo-500/20 disabled:opacity-50 disabled:scale-100"
+                 >
+                   Próximo Passo
+                   <ArrowRight className="w-6 h-6" />
+                 </button>
+               ) : (
+                 <button
+                   onClick={handleGenerate}
+                   className="h-16 px-12 rounded-full bg-emerald-600 text-white font-bold text-lg flex items-center gap-3 hover:bg-emerald-700 hover:scale-105 transition-all shadow-xl shadow-emerald-500/20"
+                 >
+                   Gerar Avaliação
+                   <Sparkles className="w-6 h-6" />
+                 </button>
+               )}
+             </div>
+           )}
         </div>
       </div>
     </div>
