@@ -4,8 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-    const examId  = searchParams.get('examId')
-    const withKey = searchParams.get('key') === 'true'
+    const examId   = searchParams.get('examId')
+    const withKey  = searchParams.get('key') === 'true'
+    const shuffle  = searchParams.get('shuffle') === 'true'
 
     if (!examId) return NextResponse.json({ error: 'examId obrigatório' }, { status: 400 })
 
@@ -27,14 +28,27 @@ export async function GET(req: NextRequest) {
       .eq('exam_id', examId)
       .order('order_index', { ascending: true })
 
+    let processedQuestions = questions || []
+
+    // ── Lógica Anti-Cola (Embaralhamento) ──────────────────────
+    if (shuffle && processedQuestions.length > 0) {
+      processedQuestions = shuffleArray([...processedQuestions])
+      processedQuestions = processedQuestions.map(q => {
+        if (q.options && Array.isArray(q.options)) {
+          return { ...q, options: shuffleArray([...q.options]) }
+        }
+        return q
+      })
+    }
+
     const org = exam.organizations as any
     const headerFields: string[] = org?.header_config?.fields ?? ['nome', 'turma', 'data']
     const logoUrl: string | null = org?.logo_url ?? null
     const schoolName: string = org?.name ?? ''
 
     const html = buildPDFHtml({
-      exam,
-      questions: questions || [],
+      exam: shuffle ? { ...exam, title: `${exam.title} (Versão B)` } : exam,
+      questions: processedQuestions,
       schoolName,
       logoUrl,
       headerFields,
@@ -624,4 +638,13 @@ function esc(str: string | null | undefined): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
     .replace(/\n/g, '<br/>')
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const newArray = [...array]
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+  }
+  return newArray
 }

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Clock, Hash, MoreHorizontal
+  Clock, Hash, MoreHorizontal, Sparkles, X, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -26,10 +26,29 @@ export default function ExamPreviewPage() {
   const [exam, setExam] = useState<any>(null)
   const [questions, setQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [pillLoading, setPillLoading] = useState(false)
+  const [pillData, setPillData] = useState<any>(null)
   const supabase = createClient()
 
-  function openPDF(withKey = false) {
-    window.open(`/api/pdf/export?examId=${id}${withKey ? '&key=true' : ''}`, '_blank')
+  async function generateReviewPill() {
+    setPillLoading(true)
+    try {
+      const res = await fetch('/api/ai/review-pill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ examId: id }),
+      })
+      const data = await res.json()
+      setPillData(data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setPillLoading(false)
+    }
+  }
+
+  function openPDF(withKey = false, shuffle = false) {
+    window.open(`/api/pdf/export?examId=${id}${withKey ? '&key=true' : ''}${shuffle ? '&shuffle=true' : ''}`, '_blank')
   }
 
   useEffect(() => {
@@ -210,9 +229,93 @@ export default function ExamPreviewPage() {
                  <Download className="w-5 h-5" />
                  Baixar com Gabarito
                </button>
+
+               <div className="grid grid-cols-2 gap-3">
+                 <button
+                   onClick={() => openPDF(false, true)}
+                   className="h-14 bg-white border border-[#E9EAF2] text-[#1A1D2F] rounded-full font-bold text-[13px] flex items-center justify-center gap-2 hover:border-[#1A1D2F] transition-all"
+                 >
+                   Versão B
+                 </button>
+                 <button
+                   onClick={generateReviewPill}
+                   disabled={pillLoading}
+                   className="h-14 bg-indigo-50 text-[#4F46E5] rounded-full font-bold text-[13px] flex items-center justify-center gap-2 hover:bg-indigo-100 transition-all disabled:opacity-50"
+                 >
+                   {pillLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                   Pílula
+                 </button>
+               </div>
             </div>
           </div>
         </div>
+
+        {/* Modal da Pílula de Revisão */}
+        {pillData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-[#1A1D2F]/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-white w-full max-w-xl rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+              <div className="bg-[#4F46E5] p-10 text-white relative">
+                <button 
+                  onClick={() => setPillData(null)}
+                  className="absolute top-8 right-8 p-2 bg-white/10 rounded-full hover:bg-white/20 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <Sparkles className="w-8 h-8 mb-6 fill-white/20" />
+                <h3 className="text-[26px] font-extrabold tracking-tight mb-2">{pillData.title}</h3>
+                <p className="text-white/70 text-[14px]">Sua dose diária de conhecimento para gabaritar!</p>
+              </div>
+
+              <div className="p-10 space-y-8 overflow-y-auto max-h-[60vh]">
+                <div>
+                  <h4 className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-[0.2em] mb-4">Conceitos Essenciais</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {pillData.essential_concepts.map((c: string, i: number) => (
+                      <div key={i} className="flex items-start gap-3 p-4 rounded-2xl bg-[#F8F9FE] border border-[#E9EAF2]">
+                        <div className="w-5 h-5 rounded-full bg-[#4F46E5] text-white flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">{i+1}</div>
+                        <p className="text-[14px] text-[#1A1D2F] font-medium">{c}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-[12px] font-bold text-[#8E94BB] uppercase tracking-[0.2em] mb-4">Dicas de Mestre</h4>
+                  <div className="space-y-4">
+                    {pillData.quick_tips.map((t: string, i: number) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                        <p className="text-[14px] text-[#1A1D2F] leading-relaxed">{t}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 rounded-3xl bg-indigo-50 border border-indigo-100">
+                  <h4 className="text-[12px] font-bold text-[#4F46E5] uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                    <Brain className="w-4 h-4" /> Desafio de Reflexão
+                  </h4>
+                  <p className="text-[14px] text-[#4F46E5] leading-relaxed font-medium">{pillData.challenge}</p>
+                </div>
+              </div>
+
+              <div className="p-8 border-t border-[#E9EAF2] bg-[#F8F9FE] flex gap-4">
+                 <button 
+                   onClick={() => window.print()} 
+                   className="flex-1 h-12 bg-[#1A1D2F] text-white rounded-full font-bold text-[14px] flex items-center justify-center gap-2"
+                 >
+                   <Printer className="w-4 h-4" /> Imprimir Pílula
+                 </button>
+                 <button 
+                   onClick={() => setPillData(null)}
+                   className="px-8 h-12 bg-white border border-[#E9EAF2] text-[#8E94BB] rounded-full font-bold text-[14px]"
+                 >
+                   Fechar
+                 </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Pro Plan Upsell Card */}
         <div className="p-8 rounded-[40px] bg-[#4F46E5] text-white relative overflow-hidden group">
