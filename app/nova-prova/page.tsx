@@ -17,8 +17,15 @@ export type ExamFormData = {
   difficulty: 'facil' | 'medio' | 'dificil'
   style: 'regular' | 'enem' | 'homework'
   bloomLevel: string
-  questionCount: number
+  questionMix: {
+    multipleChoice: number
+    openEnded: number
+    fillInBlanks: number
+    trueFalse: number
+    complex: number
+  }
   optionsCount: number
+  optionsFormat: 'letters' | 'roman'
   useBncc: boolean
   selectedDocumentIds: string[]
   accessibility: {
@@ -35,8 +42,15 @@ const INITIAL_DATA: ExamFormData = {
   difficulty: 'medio',
   style: 'regular',
   bloomLevel: 'Aplicação',
-  questionCount: 8,
+  questionMix: {
+    multipleChoice: 5,
+    openEnded: 2,
+    fillInBlanks: 0,
+    trueFalse: 0,
+    complex: 0
+  },
   optionsCount: 4,
+  optionsFormat: 'letters',
   useBncc: true,
   selectedDocumentIds: [],
   accessibility: { tea: false, dyslexia: false, adhd: false }
