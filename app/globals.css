@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: 243 75% 59%; /* Indigo/Purple do Rabbu */
+  --bg-main: 220 33% 98%; /* Cinza azulado bem claro */
+  --sidebar-w: 260px;
+}
+
+body {
+  @apply bg-[#F8F9FE] text-[#1A1D2F] antialiased;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+@layer components {
+  /* Sidebar Item Style */
+  .sidebar-link {
+    @apply flex items-center gap-3 px-6 py-3.5 text-[14px] font-medium transition-all duration-200 text-[#8E94BB] border-r-4 border-transparent hover:bg-neutral-50;
+  }
+  .sidebar-link-active {
+    @apply text-[#4F46E5] border-[#4F46E5] bg-[#F5F5FF];
+  }
+
+  /* Rabbu Style Cards */
+  .rabbu-card {
+    @apply bg-white border border-[#E9EAF2] rounded-[18px] shadow-[0_2px_12px_rgba(11,22,44,0.03)] transition-all duration-300;
+  }
+  .rabbu-card-active {
+    @apply border-[#4F46E5] ring-1 ring-[#4F46E5] shadow-[0_4px_20px_rgba(79,70,229,0.12)];
+  }
+
+  /* Buttons */
+  .btn-rabbu {
+    @apply flex items-center justify-center gap-2 px-6 py-3 bg-[#4F46E5] text-white rounded-[14px] font-semibold text-sm transition-all duration-200 hover:bg-[#3F37C9] active:scale-[0.97] shadow-lg shadow-indigo-500/20;
+  }
+  .btn-rabbu-secondary {
+    @apply flex items-center justify-center gap-2 px-6 py-3 bg-white text-[#4F46E5] border border-[#E9EAF2] rounded-[14px] font-semibold text-sm transition-all duration-200 hover:bg-[#F5F5FF] active:scale-[0.97];
+  }
+
+  /* Search Input */
+  .search-input {
+    @apply w-full bg-white border border-[#E9EAF2] rounded-[14px] px-5 py-3 text-sm focus:outline-none focus:border-[#4F46E5] transition-all shadow-sm;
+  }
+
+  /* Badge Custom */
+  .badge-rabbu {
+    @apply px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #E2E4F0; border-radius: 10px; }
