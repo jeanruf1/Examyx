@@ -7,9 +7,19 @@ import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Clock, Hash, MoreHorizontal
+  Clock, Hash, MoreHorizontal, X, Check
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Mapeador inverso para exibir Bloom em português no preview
+const BLOOM_PORTUGUESE: Record<string, string> = {
+  memorization: 'Lembrar',
+  comprehension: 'Compreender',
+  application: 'Aplicar',
+  analysis: 'Analisar',
+  evaluation: 'Avaliar',
+  synthesis: 'Criar'
+}
 
 export default function ExamPreviewPage() {
   const { id } = useParams()
@@ -58,6 +68,7 @@ export default function ExamPreviewPage() {
                  <Edit3 className="w-4 h-4" />
                  Editar Questões
                </button>
+               {/* APAGADO: Botão de imprimir duplicado aqui */}
                <button 
                  onClick={() => window.print()}
                  className="flex items-center gap-2 px-8 py-2 bg-[#1A1D2F] text-white rounded-full font-bold text-[13px] hover:scale-105 transition-all shadow-lg shadow-neutral-200"
@@ -88,8 +99,12 @@ export default function ExamPreviewPage() {
                 <span className="w-12 h-12 rounded-[18px] bg-[#F8F9FE] text-[#1A1D2F] flex items-center justify-center font-bold text-xl border border-[#E9EAF2] group-hover:bg-[#4F46E5] group-hover:text-white transition-all">
                   {idx + 1}
                 </span>
-                <div className="flex gap-2">
-                  <span className="px-3 py-1.5 bg-neutral-100 text-[#8E94BB] text-[10px] font-bold rounded-full uppercase tracking-widest">{q.bloom_level}</span>
+                <div className="flex items-center gap-2">
+                  {q.bloom_level && (
+                    <span className="px-3 py-1.5 bg-neutral-100 text-[#8E94BB] text-[10px] font-bold rounded-full uppercase tracking-widest">
+                      {BLOOM_PORTUGUESE[q.bloom_level] || q.bloom_level}
+                    </span>
+                  )}
                   {q.bncc_code && <span className="px-3 py-1.5 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full uppercase tracking-widest">{q.bncc_code}</span>}
                 </div>
               </div>
@@ -100,30 +115,35 @@ export default function ExamPreviewPage() {
 
               {q.options && (
                 <div className="space-y-3 max-w-2xl">
-                  {q.options.map((opt: any) => (
-                    <div key={opt.letter} className={cn(
-                      "flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                      opt.is_correct 
-                        ? "border-emerald-500 bg-emerald-50/30" 
-                        : "border-[#F0F1F7] bg-white"
-                    )}>
-                      <span className={cn(
-                        "w-7 h-7 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0 transition-all",
+                  {q.options.map((opt: any) => {
+                    const isVF = opt.text === 'Verdadeiro' || opt.text === 'Falso'
+                    return (
+                      <div key={opt.letter} className={cn(
+                        "flex items-center gap-4 p-4 rounded-2xl border transition-all",
                         opt.is_correct 
-                          ? "bg-emerald-500 text-white" 
-                          : "bg-neutral-50 text-[#8E94BB] border border-[#E9EAF2]"
+                          ? "border-emerald-500 bg-emerald-50/30" 
+                          : "border-[#F0F1F7] bg-white"
                       )}>
-                        {opt.letter}
-                      </span>
-                      <span className={cn(
-                        "text-[15px] leading-snug",
-                        opt.is_correct ? "text-emerald-700 font-bold" : "text-[#1A1D2F] font-medium"
-                      )}>
-                        {opt.text}
-                      </span>
-                      {opt.is_correct && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />}
-                    </div>
-                  ))}
+                        <span className={cn(
+                          "w-8 h-8 rounded-xl flex items-center justify-center text-[12px] font-bold shrink-0 transition-all",
+                          opt.is_correct 
+                            ? "bg-emerald-500 text-white" 
+                            : "bg-neutral-50 text-[#8E94BB] border border-[#E9EAF2]"
+                        )}>
+                          {isVF ? (
+                            opt.text === 'Verdadeiro' ? 'V' : 'F'
+                          ) : opt.letter}
+                        </span>
+                        <span className={cn(
+                          "text-[15px] leading-snug",
+                          opt.is_correct ? "text-emerald-700 font-bold" : "text-[#1A1D2F] font-medium"
+                        )}>
+                          {opt.text}
+                        </span>
+                        {opt.is_correct && <CheckCircle2 className="w-4 h-4 text-emerald-500 ml-auto" />}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
