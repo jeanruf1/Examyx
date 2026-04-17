@@ -1,13 +1,13 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Clock, Hash, MoreHorizontal, X, Check
+  Clock, Hash, MoreHorizontal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -23,11 +23,14 @@ const BLOOM_PORTUGUESE: Record<string, string> = {
 
 export default function ExamPreviewPage() {
   const { id } = useParams()
-  const router = useRouter()
   const [exam, setExam] = useState<any>(null)
   const [questions, setQuestions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
+
+  function openPDF(withKey = false) {
+    window.open(`/api/pdf/export?examId=${id}${withKey ? '&key=true' : ''}`, '_blank')
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -193,13 +196,19 @@ export default function ExamPreviewPage() {
             </div>
 
             <div className="space-y-4 pt-4">
-               <button className="w-full h-14 bg-[#1A1D2F] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-neutral-200">
+               <button
+                 onClick={() => openPDF(false)}
+                 className="w-full h-14 bg-[#1A1D2F] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-neutral-200"
+               >
                  <Printer className="w-5 h-5" />
                  Imprimir Prova
                </button>
-               <button className="w-full h-14 bg-[#4F46E5] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-indigo-500/20">
+               <button
+                 onClick={() => openPDF(true)}
+                 className="w-full h-14 bg-[#4F46E5] text-white rounded-full font-bold text-[15px] flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-xl shadow-indigo-500/20"
+               >
                  <Download className="w-5 h-5" />
-                 Baixar PDF
+                 Baixar com Gabarito
                </button>
             </div>
           </div>
