@@ -64,10 +64,13 @@ export default function ExamPreviewPage() {
                Voltar
             </Link>
             <div className="flex items-center gap-3">
-               <button className="flex items-center gap-2 px-6 py-2 bg-white border border-[#E9EAF2] text-[#1A1D2F] rounded-full font-bold text-[13px] hover:border-[#1A1D2F] transition-all">
+               <Link
+                 href={`/provas/${id}/editor`}
+                 className="flex items-center gap-2 px-6 py-2 bg-white border border-[#E9EAF2] text-[#1A1D2F] rounded-full font-bold text-[13px] hover:border-[#1A1D2F] transition-all"
+               >
                  <Edit3 className="w-4 h-4" />
                  Editar Questões
-               </button>
+               </Link>
             </div>
         </div>
 
