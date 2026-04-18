@@ -9,16 +9,60 @@ import {
 } from 'lucide-react'
 import { formatDate, cn } from '@/lib/utils'
 import DashboardActions from '@/components/dashboard/DashboardActions'
+import DashboardFilters from '@/components/dashboard/DashboardFilters'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string }>
+}) {
+  const { q, status } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, organizations(name, plan, trial_ends_at)')
+    .select('id, full_name, role, org_id, organizations(id, name, plan, trial_ends_at, monthly_token_limit)')
     .eq('id', user?.id)
     .single()
+
+  const orgId = profile?.org_id
+  const tokenLimit = (profile?.organizations as any)?.monthly_token_limit || 50000
+
+  // Buscar uso total de tokens da organização
+  const { data: usageData } = await supabase
+    .from('token_usage')
+    .select('tokens_total')
+    .eq('org_id', orgId)
+
+  const totalUsed = usageData?.reduce((acc, curr) => acc + (curr.tokens_total || 0), 0) || 0
+  const remaining = Math.max(tokenLimit - totalUsed, 0)
+  const pctUsed = Math.min((totalUsed / tokenLimit) * 100, 100)
+  
+  // Média estimada: 40k tokens por prova (OCR + Geração + Refinamento)
+  const estExams = Math.floor(remaining / 40000)
+
+  // Consulta base para provas recentes com filtros
+  let query = supabase
+    .from('exams')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  // Filtro de Busca
+  if (q) {
+    query = query.ilike('title', `%${q}%`)
+  }
+
+  // Filtro de Status
+  if (status === 'archived') {
+    query = query.eq('status', 'archived')
+  } else {
+    // Por padrão mostra publicados e rascunhos que não estão arquivados
+    query = query.neq('status', 'archived')
+  }
+
+  const { data: recentExams } = await query
 
   const { count: examCount } = await supabase
     .from('exams')
@@ -32,12 +76,6 @@ export default async function DashboardPage() {
     .from('documents')
     .select('*', { count: 'exact', head: true })
 
-  const { data: recentExams } = await supabase
-    .from('exams')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(8)
-
   const firstName = profile?.full_name?.split(' ')[0]
 
   return (
@@ -45,12 +83,75 @@ export default async function DashboardPage() {
       
       {/* Header with Actions */}
       <div className="flex items-start justify-between mb-12">
-        <div>
-          <h2 className="text-[14px] font-bold text-[#4F46E5] uppercase tracking-[0.15em] mb-1">Início</h2>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-[14px] font-bold text-[#4F46E5] uppercase tracking-[0.15em]">Início</h2>
+            <span className="w-1 h-1 rounded-full bg-[#D1D5DB]" />
+            <p className="text-[#8E94BB] text-[13px] font-medium">{(profile?.organizations as any)?.name}</p>
+          </div>
           <h1 className="text-[36px] font-bold text-[#1A1D2F] tracking-tight">Olá, {firstName}</h1>
-          <p className="text-[#8E94BB] text-[16px]">{profile?.organizations?.name}</p>
         </div>
         <DashboardActions />
+      </div>
+
+      {/* Cota e Avisos */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
+        {/* Widget de Saldo IA */}
+        <div className="lg:col-span-8 rabbu-card p-8 bg-[#1A1D2F] text-white overflow-hidden relative group">
+           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:scale-110 transition-transform duration-700">
+              <BrainCircuit className="w-40 h-40 text-white" />
+           </div>
+           
+           <div className="relative z-10">
+              <div className="flex items-center justify-between mb-8">
+                 <div>
+                    <h3 className="text-xl font-bold mb-1">Saldo de IA da Instituição</h3>
+                    <p className="text-white/40 text-[13px]">Consumo compartilhado entre todos os professores.</p>
+                 </div>
+                 <div className="text-right">
+                    <p className="text-2xl font-bold text-white">{estExams} Provas</p>
+                    <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Capacidade Restante</p>
+                 </div>
+              </div>
+
+              <div className="mb-4">
+                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider mb-2">
+                    <span className="text-white/40">Uso Atual</span>
+                    <span className={cn(pctUsed > 80 ? "text-rose-400" : "text-indigo-400")}>
+                       {totalUsed.toLocaleString('pt-BR')} / {tokenLimit.toLocaleString('pt-BR')} TOKENS
+                    </span>
+                 </div>
+                 <div className="h-2 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5">
+                    <div 
+                      className={cn(
+                        "h-full rounded-full transition-all duration-1000",
+                        pctUsed > 80 ? "bg-rose-500" : "bg-indigo-500"
+                      )} 
+                      style={{ width: `${pctUsed}%` }} 
+                    />
+                 </div>
+              </div>
+              <p className="text-[12px] text-white/30 italic">* A capacidade restante é baseada na média de tokens por prova gerada.</p>
+           </div>
+        </div>
+
+        {/* Notificações Curtas */}
+        <div className="lg:col-span-4 rabbu-card p-8 bg-white border border-[#E9EAF2] flex flex-col">
+           <div className="flex items-center gap-3 mb-6">
+              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                 <Bell className="w-4 h-4 text-amber-600" />
+              </div>
+              <h3 className="font-bold text-[#1A1D2F]">Avisos</h3>
+           </div>
+           <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
+              <p className="text-[#8E94BB] text-[13px] leading-relaxed">
+                Nenhuma notificação importante da instituição para hoje.
+              </p>
+           </div>
+           <button className="w-full py-3 mt-6 text-[12px] font-bold text-[#4F46E5] border border-indigo-100 rounded-xl hover:bg-indigo-50 transition-all">
+              Ver Histórico
+           </button>
+        </div>
       </div>
 
       {/* Stats Bar */}
@@ -85,26 +186,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="flex items-center justify-between mb-8 gap-6 bg-white p-2 rounded-[20px] border border-[#E9EAF2] shadow-sm">
-        <div className="flex-1 relative">
-          <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#8E94BB]" />
-          <input 
-            type="text" 
-            placeholder="Pesquisar em sua biblioteca de provas..." 
-            className="w-full bg-transparent border-none focus:ring-0 pl-12 h-12 text-sm"
-          />
-        </div>
-        <div className="flex items-center gap-2 pr-2">
-          <div className="flex bg-[#F8F9FE] p-1 rounded-[12px] gap-1 mr-2">
-            <button className="px-4 py-1.5 bg-white text-[#4F46E5] rounded-[9px] text-xs font-bold shadow-sm">Ativas</button>
-            <button className="px-4 py-1.5 text-[#8E94BB] text-xs font-bold">Histórico</button>
-          </div>
-          <button className="btn-rabbu-secondary h-10 px-4 text-xs">
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-            Filtros
-          </button>
-        </div>
-      </div>
+      <DashboardFilters />
 
       {/* List Header */}
       <div className="flex items-center justify-between mb-8">
