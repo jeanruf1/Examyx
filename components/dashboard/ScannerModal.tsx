@@ -16,7 +16,7 @@ interface ScannerModalProps {
 }
 
 export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
-  const [image, setImage] = useState<string | null>(null)
+  const [images, setImages] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<any[] | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -28,10 +28,12 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
     const file = e.target.files?.[0]
     if (!file) return
 
+    setLoading(true)
+    setError(null)
+    setImages([])
+
     if (file.type === 'application/pdf') {
-      setLoading(true)
       try {
-        // Carrega PDF.js dinamicamente via CDN para conversão
         const script = document.createElement('script')
         script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
         document.head.appendChild(script)
@@ -45,18 +47,23 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
             
             const pdf = await pdfjsLib.getDocument(typedarray).promise
-            const page = await pdf.getPage(1) // Pega a primeira página
-            const viewport = page.getViewport({ scale: 2.0 }) // Alta qualidade
-            
-            const canvas = document.createElement('canvas')
-            const context = canvas.getContext('2d')
-            canvas.height = viewport.height
-            canvas.width = viewport.width
+            const numPages = Math.min(pdf.numPages, 10) // Limite de 10 páginas para segurança
+            const extractedImages: string[] = []
 
-            await page.render({ canvasContext: context, viewport }).promise
-            setImage(canvas.toDataURL('image/jpeg', 0.8))
+            for (let i = 1; i <= numPages; i++) {
+              const page = await pdf.getPage(i)
+              const viewport = page.getViewport({ scale: 1.5 })
+              const canvas = document.createElement('canvas')
+              const context = canvas.getContext('2d')
+              canvas.height = viewport.height
+              canvas.width = viewport.width
+
+              await page.render({ canvasContext: context, viewport }).promise
+              extractedImages.push(canvas.toDataURL('image/jpeg', 0.7))
+            }
+
+            setImages(extractedImages)
             setLoading(false)
-            setError(null)
           }
           reader.readAsArrayBuffer(file)
         }
@@ -67,15 +74,15 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
     } else {
       const reader = new FileReader()
       reader.onloadend = () => {
-        setImage(reader.result as string)
-        setError(null)
+        setImages([reader.result as string])
+        setLoading(false)
       }
       reader.readAsDataURL(file)
     }
   }
 
   const startScanning = async () => {
-    if (!image) return
+    if (images.length === 0) return
     setLoading(true)
     setError(null)
 
@@ -83,7 +90,7 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
       const res = await fetch('/api/ai/ocr', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image }),
+        body: JSON.stringify({ images }),
       })
 
       const data = await res.json()
@@ -96,6 +103,47 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
     }
   }
 
+  const cropAndUploadImage = async (pageDataUrl: string, bbox: number[], fileName: string) => {
+    return new Promise<string>(async (resolve, reject) => {
+      try {
+        const img = new Image()
+        img.onload = async () => {
+          const [ymin, xmin, ymax, xmax] = bbox
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          
+          const width = (xmax - xmin) * img.width / 1000
+          const height = (ymax - ymin) * img.height / 1000
+          const x = xmin * img.width / 1000
+          const y = ymin * img.height / 1000
+
+          canvas.width = width
+          canvas.height = height
+          ctx?.drawImage(img, x, y, width, height, 0, 0, width, height)
+          
+          const blob = await new Promise<Blob | null>(res => canvas.toBlob(res, 'image/jpeg', 0.9))
+          if (!blob) return resolve('')
+
+          const supabase = createClient()
+          const filePath = `ocr-assets/${Date.now()}-${fileName}.jpg`
+          const { data, error } = await supabase.storage.from('materials').upload(filePath, blob)
+          
+          if (error) {
+            console.error('Erro upload asset:', error)
+            return resolve('')
+          }
+          
+          const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(filePath)
+          resolve(publicUrl)
+        }
+        img.src = pageDataUrl
+      } catch (err) {
+        console.error('Falha no crop/upload:', err)
+        resolve('')
+      }
+    })
+  }
+
   const handleConfirm = async () => {
     if (!results) return
     setLoading(true)
@@ -103,33 +151,53 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
     
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Usuário não autenticado')
+      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user.id).single()
       
-      // 1. Criar a prova (Rascunho via OCR)
       const { data: exam, error: examError } = await supabase
         .from('exams')
         .insert({
-          title: `Importado via Foto - ${new Date().toLocaleDateString()}`,
-          subject: 'A definir',
-          grade: 'A definir',
+          title: `Importado via OCR - ${new Date().toLocaleDateString()}`,
+          subject: 'Matemática',
+          grade: '8º Ano',
           status: 'draft',
-          organization_id: (await supabase.from('profiles').select('organization_id').eq('id', user?.id).single()).data?.organization_id
+          teacher_id: user.id,
+          org_id: profile?.org_id
         })
         .select()
         .single()
 
       if (examError) throw examError
 
-      // 2. Inserir as questões
-      const questionsToInsert = results.map(q => ({
-        exam_id: exam.id,
-        content: q.content,
-        bloom_level: q.bloom_level,
-        bncc_code: q.bncc_code,
-        explanation: q.explanation,
-        options: q.options
-      }))
+      // Processar questões e extrair imagens se houver
+      const processedQuestions = []
+      for (const q of results) {
+        let finalContent = q.content
+        
+        if (q.image_bbox && q.page_index !== undefined && images[q.page_index]) {
+          const imageUrl = await cropAndUploadImage(
+            images[q.page_index], 
+            q.image_bbox, 
+            `q-${Math.random().toString(36).substr(2, 5)}`
+          )
+          if (imageUrl) {
+            finalContent = `${q.content}\n\n![Figura](${imageUrl})`
+          }
+        }
 
-      const { error: qError } = await supabase.from('questions').insert(questionsToInsert)
+        processedQuestions.push({
+          exam_id: exam.id,
+          org_id: profile?.org_id,
+          content: finalContent,
+          type: 'multiple_choice',
+          bloom_level: q.bloom_level || 'application',
+          bncc_code: q.bncc_code || null,
+          explanation: q.explanation || '',
+          options: q.options || []
+        })
+      }
+
+      const { error: qError } = await supabase.from('questions').insert(processedQuestions)
       if (qError) throw qError
 
       router.push(`/provas/${exam.id}/editor`)
@@ -156,24 +224,31 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center border-2 border-dashed border-[#E9EAF2] rounded-[32px] bg-white relative overflow-hidden group">
-            {image ? (
-              <>
-                <img src={image} className="w-full h-full object-contain p-4" alt="Preview" />
+            {images.length > 0 ? (
+              <div className="w-full h-full p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4">
+                {images.map((img, idx) => (
+                  <div key={idx} className="relative w-full aspect-[1/1.4] bg-neutral-50 rounded-xl border border-neutral-100 overflow-hidden shrink-0">
+                    <img src={img} className="w-full h-full object-contain" alt={`Página ${idx + 1}`} />
+                    <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-[10px] font-bold rounded-md backdrop-blur-md">
+                      Página {idx + 1}
+                    </div>
+                  </div>
+                ))}
                 <button 
-                  onClick={() => { setImage(null); setResults(null); }}
-                  className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all opacity-0 group-hover:opacity-100"
+                  onClick={() => { setImages([]); setResults(null); }}
+                  className="absolute top-4 right-4 z-10 p-2 bg-red-50 text-red-500 rounded-full hover:bg-red-100 transition-all shadow-lg"
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
-              </>
+              </div>
             ) : (
               <label className="cursor-pointer flex flex-col items-center gap-4 group">
                 <div className="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Upload className="w-8 h-8 text-[#4F46E5]" />
                 </div>
-                <div className="text-center">
-                  <p className="font-bold text-[#1A1D2F]">Clique para subir</p>
-                  <p className="text-[12px] text-[#8E94BB]">PNG, JPG ou PDF</p>
+                <div className="text-center px-6">
+                  <p className="font-bold text-[#1A1D2F]">Clique para subir sua prova</p>
+                  <p className="text-[12px] text-[#8E94BB]">Suporta PDF (até 10 páginas) ou imagens PNG/JPG</p>
                 </div>
                 <input type="file" className="hidden" accept="image/png, image/jpeg, application/pdf" onChange={handleFileUpload} />
               </label>
@@ -182,11 +257,11 @@ export default function ScannerModal({ isOpen, onClose }: ScannerModalProps) {
 
           <button
             onClick={startScanning}
-            disabled={!image || loading || !!results}
+            disabled={images.length === 0 || loading || !!results}
             className="mt-8 w-full h-14 bg-[#4F46E5] text-white rounded-full font-bold text-[16px] flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-50 shadow-xl shadow-indigo-500/20"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
-            {loading ? 'Lendo Prova...' : 'Iniciar Escaneamento'}
+            {loading ? 'Analisando Páginas...' : `Iniciar Escaneamento (${images.length} pág.)`}
           </button>
         </div>
 
