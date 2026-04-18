@@ -83,23 +83,19 @@ export default function DocumentosPage() {
   }
 
   return (
-    <div className="max-w-[1200px] mx-auto pb-20 animate-fade-in">
+    <div className="animate-fade-in pb-20">
       
-      {/* Header */}
-      <div className="flex items-start justify-between mb-12">
+      {/* Header Premium */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
         <div>
-          <Link href="/dashboard" className="flex items-center gap-2 text-[13px] font-bold text-[#8E94BB] hover:text-[#4F46E5] transition-colors mb-4">
-            <ChevronLeft className="w-4 h-4" />
-            Voltar ao Início
-          </Link>
-          <h1 className="text-[36px] font-bold text-[#1A1D2F] tracking-tight">Biblioteca de Materiais</h1>
-          <p className="text-[#8E94BB] text-[16px]">Suas apostilas, PDFs e referências para geração de provas.</p>
+          <h1 className="text-[42px] font-bold text-[#1A1D2F] tracking-tight leading-none mb-3">Biblioteca de Materiais</h1>
+          <p className="text-[#8E94BB] text-[16px] font-medium">Suas apostilas, PDFs e referências para geração de provas.</p>
         </div>
         
-        <label className="cursor-pointer group">
-          <div className="btn-rabbu h-12 px-8 flex items-center gap-2 group-hover:scale-105 transition-all">
-            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            {uploading ? 'Subindo...' : 'Novo Material'}
+        <label className="cursor-pointer group flex-shrink-0">
+          <div className="btn-rabbu h-14 px-10 flex items-center gap-3 rounded-2xl shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all">
+            {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+            <span className="text-[16px] font-bold">{uploading ? 'Subindo...' : 'Novo Material'}</span>
           </div>
           <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt" onChange={handleUpload} disabled={uploading} />
         </label>
@@ -130,7 +126,7 @@ export default function DocumentosPage() {
           <input 
             type="text" 
             placeholder="Pesquisar em seus materiais..." 
-            className="w-full bg-transparent border-none focus:ring-0 pl-12 h-12 text-sm"
+            className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none pl-12 h-12 text-sm text-[#1A1D2F] placeholder:text-[#8E94BB]"
           />
         </div>
       </div>

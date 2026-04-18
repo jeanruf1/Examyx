@@ -40,7 +40,7 @@ export default function DashboardFilters() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Pesquisar em sua biblioteca de provas..." 
-          className="w-full bg-transparent border-none focus:ring-0 pl-12 h-12 text-sm"
+          className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none pl-12 h-12 text-sm text-[#1A1D2F] placeholder:text-[#8E94BB]"
         />
       </div>
       <div className="flex items-center gap-2 pr-2">
