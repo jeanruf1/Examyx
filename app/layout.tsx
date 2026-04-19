@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   keywords: ['provas', 'educação', 'IA', 'BNCC', 'professor', 'escola'],
   authors: [{ name: 'ProvaAI' }],
   robots: 'index, follow',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
 }
 
 export default function RootLayout({
