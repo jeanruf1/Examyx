@@ -23,17 +23,13 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh session — MUST be called before any response
+  // Refresh session
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Rotas protegidas — redirecionar para login se não autenticado
-  const isAuthRoute = request.nextUrl.pathname.startsWith('/login') ||
-                      request.nextUrl.pathname.startsWith('/register')
   const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
                            request.nextUrl.pathname.startsWith('/nova-prova') ||
                            request.nextUrl.pathname.startsWith('/provas') ||
                            request.nextUrl.pathname.startsWith('/admin') ||
-                           request.nextUrl.pathname.startsWith('/configuracoes') ||
                            request.nextUrl.pathname.startsWith('/banco-questoes') ||
                            request.nextUrl.pathname.startsWith('/documentos')
 
@@ -44,11 +40,32 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(redirectUrl)
   }
 
-  if (user && isAuthRoute) {
-    const redirectUrl = request.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    return NextResponse.redirect(redirectUrl)
+  // ── Verificação de Cargo (RBAC) ──────────────────────────
+  if (user) {
+    // Se logado e em rota admin, garantir que é superadmin
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.role !== 'superadmin') {
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.pathname = '/dashboard'
+        return NextResponse.redirect(redirectUrl)
+      }
+    }
+
+    // Redirecionar se já logado e tentar acessar login
+    if (request.nextUrl.pathname.startsWith('/login')) {
+      const redirectUrl = request.nextUrl.clone()
+      redirectUrl.pathname = '/dashboard'
+      return NextResponse.redirect(redirectUrl)
+    }
   }
+
+  return supabaseResponse
 
   return supabaseResponse
 }

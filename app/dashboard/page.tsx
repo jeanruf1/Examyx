@@ -5,18 +5,20 @@ import {
   Search, SlidersHorizontal, 
   BrainCircuit, BookOpen, Clock,
   MoreVertical, Star, ArrowRight,
-  Archive, Camera
+  Archive, Camera, AlertTriangle, Bell
 } from 'lucide-react'
+import { PLAN_LIMITS, AVG_TOKENS_PER_EXAM } from '@/lib/config/plans'
 import { formatDate, cn } from '@/lib/utils'
 import DashboardActions from '@/components/dashboard/DashboardActions'
 import DashboardFilters from '@/components/dashboard/DashboardFilters'
+import ExamList from '@/components/dashboard/ExamList'
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string }>
+  searchParams: Promise<{ q?: string; status?: string; subject?: string }>
 }) {
-  const { q, status } = await searchParams
+  const { q, status, subject } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -54,12 +56,9 @@ export default async function DashboardPage({
     query = query.ilike('title', `%${q}%`)
   }
 
-  // Filtro de Status
-  if (status === 'archived') {
-    query = query.eq('status', 'archived')
-  } else {
-    // Por padrão mostra publicados e rascunhos que não estão arquivados
-    query = query.neq('status', 'archived')
+  // Filtro de Matéria
+  if (subject && subject !== 'Todos') {
+    query = query.eq('subject', subject)
   }
 
   const { data: recentExams } = await query
@@ -78,8 +77,24 @@ export default async function DashboardPage({
 
   const firstName = profile?.full_name?.split(' ')[0]
 
+  // Lógica de Alerta de Cota
+  let quotaAlert = null
+  if (remaining <= 0) {
+    quotaAlert = { type: 'error', message: 'Cota de IA esgotada! Fale com a coordenação para expandir o limite.', icon: AlertTriangle, bg: 'bg-rose-50 border-rose-100 text-rose-600' }
+  } else if (remaining < 5000) {
+    quotaAlert = { type: 'urgent', message: 'Sua cota de IA está quase no fim.', icon: Bell, bg: 'bg-amber-50 border-amber-100 text-amber-600' }
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto pb-20 animate-fade-in">
+
+      {/* Alerta de Cota Dinâmico */}
+      {quotaAlert && (
+        <div className={cn("mb-8 p-4 rounded-2xl border flex items-center gap-4 animate-in slide-in-from-top-4 duration-500 shadow-sm", quotaAlert.bg)}>
+          <quotaAlert.icon className="w-5 h-5 flex-shrink-0" />
+          <p className="text-[13px] font-bold tracking-tight">{quotaAlert.message}</p>
+        </div>
+      )}
       
       {/* Header with Actions */}
       <div className="flex items-start justify-between mb-12">
@@ -94,63 +109,56 @@ export default async function DashboardPage({
         <DashboardActions />
       </div>
 
-      {/* Cota e Avisos */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-12">
-        {/* Widget de Saldo IA */}
-        <div className="lg:col-span-8 rabbu-card p-8 bg-[#1A1D2F] text-white overflow-hidden relative group">
-           <div className="absolute top-0 right-0 p-12 opacity-5 group-hover:scale-110 transition-transform duration-700">
-              <BrainCircuit className="w-40 h-40 text-white" />
+      {/* Cota e Capacidade */}
+      <div className="mb-12">
+        <div className="rabbu-card p-8 bg-white border border-[#E9EAF2] relative overflow-hidden group">
+           {/* Background Decoration */}
+           <div className="absolute -right-10 -top-10 opacity-[0.03] group-hover:scale-110 transition-transform duration-700">
+              <BrainCircuit className="w-64 h-64 text-[#4F46E5]" />
            </div>
-           
-           <div className="relative z-10">
-              <div className="flex items-center justify-between mb-8">
-                 <div>
-                    <h3 className="text-xl font-bold mb-1">Saldo de IA da Instituição</h3>
-                    <p className="text-white/40 text-[13px]">Consumo compartilhado entre todos os professores.</p>
+
+           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+              <div className="flex-1">
+                 <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                       <BrainCircuit className="w-5 h-5 text-[#4F46E5]" />
+                    </div>
+                    <div>
+                       <h3 className="text-[18px] font-bold text-[#1A1D2F]">Saldo de Inteligência Artificial</h3>
+                       <p className="text-[#8E94BB] text-[13px]">Limite mensal compartilhado com sua instituição.</p>
+                    </div>
                  </div>
-                 <div className="text-right">
-                    <p className="text-2xl font-bold text-white">{estExams} Provas</p>
-                    <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">Capacidade Restante</p>
+
+                 <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider">
+                       <span className="text-[#8E94BB]">Consumo da Escola</span>
+                       <span className="text-[#1A1D2F]">
+                          {totalUsed.toLocaleString('pt-BR')} <span className="text-[#D1D5DB]">/</span> {tokenLimit.toLocaleString('pt-BR')} tokens
+                       </span>
+                    </div>
+                    <div className="h-2 bg-neutral-50 rounded-full overflow-hidden border border-[#F0F1F7]">
+                       <div 
+                         className={cn(
+                           "h-full rounded-full transition-all duration-1000",
+                           pctUsed > 90 ? "bg-rose-500" : "bg-[#4F46E5]"
+                         )} 
+                         style={{ width: `${pctUsed}%` }} 
+                       />
+                    </div>
+                    <p className="text-[11px] text-[#8E94BB] italic font-medium">
+                       * Estimativa baseada em um consumo médio de {AVG_TOKENS_PER_EXAM.toLocaleString('pt-BR')} tokens por prova.
+                    </p>
                  </div>
               </div>
 
-              <div className="mb-4">
-                 <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider mb-2">
-                    <span className="text-white/40">Uso Atual</span>
-                    <span className={cn(pctUsed > 80 ? "text-rose-400" : "text-indigo-400")}>
-                       {totalUsed.toLocaleString('pt-BR')} / {tokenLimit.toLocaleString('pt-BR')} TOKENS
-                    </span>
-                 </div>
-                 <div className="h-2 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5">
-                    <div 
-                      className={cn(
-                        "h-full rounded-full transition-all duration-1000",
-                        pctUsed > 80 ? "bg-rose-500" : "bg-indigo-500"
-                      )} 
-                      style={{ width: `${pctUsed}%` }} 
-                    />
+              <div className="flex-shrink-0 bg-indigo-50/50 border border-indigo-100/50 rounded-[24px] p-6 text-center min-w-[200px]">
+                 <p className="text-[42px] font-black text-[#4F46E5] leading-none mb-2">~{Math.floor(remaining / AVG_TOKENS_PER_EXAM)}</p>
+                 <p className="text-[11px] font-extrabold text-[#4F46E5] uppercase tracking-[0.15em]">Provas Estimadas</p>
+                 <div className="mt-4 pt-4 border-t border-indigo-100/50">
+                    <span className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-widest">Capacidade Mensal</span>
                  </div>
               </div>
-              <p className="text-[12px] text-white/30 italic">* A capacidade restante é baseada na média de tokens por prova gerada.</p>
            </div>
-        </div>
-
-        {/* Notificações Curtas */}
-        <div className="lg:col-span-4 rabbu-card p-8 bg-white border border-[#E9EAF2] flex flex-col">
-           <div className="flex items-center gap-3 mb-6">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
-                 <Bell className="w-4 h-4 text-amber-600" />
-              </div>
-              <h3 className="font-bold text-[#1A1D2F]">Avisos</h3>
-           </div>
-           <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-              <p className="text-[#8E94BB] text-[13px] leading-relaxed">
-                Nenhuma notificação importante da instituição para hoje.
-              </p>
-           </div>
-           <button className="w-full py-3 mt-6 text-[12px] font-bold text-[#4F46E5] border border-indigo-100 rounded-xl hover:bg-indigo-50 transition-all">
-              Ver Histórico
-           </button>
         </div>
       </div>
 
@@ -194,49 +202,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Exam List */}
-      <div className="space-y-4">
-        {recentExams?.map(exam => (
-          <Link key={exam.id} href={`/provas/${exam.id}`}
-            className="rabbu-card p-6 flex items-center gap-8 group hover:rabbu-card-active">
-            
-            <div className="w-[110px] h-[80px] rounded-xl bg-neutral-50 flex-shrink-0 flex items-center justify-center border border-[#E9EAF2] group-hover:border-transparent transition-all">
-              <FileText className="w-8 h-8 text-[#8E94BB] group-hover:scale-110 transition-transform" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <h3 className="text-[18px] font-bold text-[#1A1D2F] truncate group-hover:text-[#4F46E5] transition-colors mb-1">{exam.title}</h3>
-              <div className="flex items-center gap-3">
-                <span className="text-[13px] font-medium text-[#8E94BB]">{exam.subject}</span>
-                <span className="w-1 h-1 rounded-full bg-[#D1D5DB]" />
-                <span className="text-[13px] font-medium text-[#8E94BB]">{exam.grade}</span>
-              </div>
-            </div>
-
-            <div className="hidden lg:flex items-center gap-12 px-12 border-x border-[#F0F1F7]">
-              <div className="text-center">
-                <p className="text-[15px] font-bold text-[#1A1D2F] capitalize">{exam.difficulty}</p>
-                <p className="text-[11px] text-[#8E94BB] uppercase font-bold tracking-widest">Dificuldade</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[15px] font-bold text-[#1A1D2F]">{exam.estimated_time_min}m</p>
-                <p className="text-[11px] text-[#8E94BB] uppercase font-bold tracking-widest">Duração</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6">
-              <div className={cn(
-                "badge-rabbu",
-                exam.status === 'published' ? "bg-emerald-50 text-emerald-600" : "bg-neutral-50 text-neutral-400"
-              )}>
-                {exam.status === 'published' ? 'Ativa' : 'Rascunho'}
-              </div>
-              <div className="w-10 h-10 rounded-full border border-[#E9EAF2] flex items-center justify-center group-hover:bg-[#4F46E5] group-hover:border-[#4F46E5] transition-all">
-                <ArrowRight className="w-4 h-4 text-[#8E94BB] group-hover:text-white transition-all" />
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <ExamList initialExams={recentExams || []} />
     </div>
   )
 }

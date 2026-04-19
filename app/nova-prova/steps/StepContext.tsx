@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { ExamFormData } from '../page'
-import { FileText, Loader2, BookOpen, Database, Check, Sparkles } from 'lucide-react'
+import { FileText, Loader2, BookOpen, Database, Check, Sparkles, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface Document {
   id: string
@@ -103,18 +104,67 @@ export default function StepContext({ form, onChange }: Props) {
               onChange={async (e) => {
                 const file = e.target.files?.[0]
                 if (!file) return
+                console.log('>>> [DEBUG] INICIANDO UPLOAD')
                 setUploading(true)
+                
                 const { data: { user } } = await supabase.auth.getUser()
-                await supabase.from('documents').insert({
+                console.log('>>> [DEBUG] USER:', user?.id)
+                const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user?.id).single()
+                const orgId = profile?.org_id
+                console.log('>>> [DEBUG] ORG:', orgId)
+
+                // 1. Upload real para o Storage
+                const fileName = `${Date.now()}-${file.name}`
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                  .from('materials')
+                  .upload(`${orgId}/${fileName}`, file)
+
+                if (uploadError) {
+                  console.error('Erro no upload:', uploadError)
+                  setUploading(false)
+                  return
+                }
+
+                const fileUrl = supabase.storage.from('materials').getPublicUrl(`${orgId}/${fileName}`).data.publicUrl
+
+                // 2. Inserir registro na tabela documents
+                const { data: docData, error: docError } = await supabase.from('documents').insert({
                   name: file.name,
-                  file_url: 'temp_url',
+                  file_url: fileUrl,
                   type: 'pdf',
                   file_size_bytes: file.size,
-                  is_indexed: true,
+                  is_indexed: false, // Começa como false até terminar o processamento
                   teacher_id: user?.id,
-                  org_id: (await supabase.from('profiles').select('org_id').eq('id', user?.id).single()).data?.org_id
-                })
-                // Recarregar a lista (loadDocuments)
+                  org_id: orgId
+                }).select().single()
+
+                if (docError) {
+                  console.error('Erro ao salvar documento:', docError)
+                  setUploading(false)
+                  return
+                }
+
+                // 3. Chamar API de indexação real
+                console.log('>>> [DEBUG] CHAMANDO API INDEX COM ID:', docData.id)
+                try {
+                  const res = await fetch('/api/ai/documents/index', {
+                    method: 'POST',
+                    body: JSON.stringify({ documentId: docData.id })
+                  })
+                  
+                  const result = await res.json()
+                  
+                  if (!res.ok) {
+                    throw new Error(result.error || 'Falha na indexação')
+                  }
+                  
+                  toast.success(`Material "${file.name}" indexado com sucesso! (${result.chunks} fragmentos)`)
+                } catch (err: any) {
+                  console.error('Erro na indexação:', err)
+                  toast.error(`Erro ao processar "${file.name}": ${err.message}`)
+                }
+
+                // 4. Recarregar a lista
                 const { data } = await supabase
                   .from('documents')
                   .select('id, name, type, subject, created_at')

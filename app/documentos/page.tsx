@@ -50,25 +50,56 @@ export default function DocumentosPage() {
     if (!file) return
 
     setUploading(true)
+    console.log('>>> [DOCS] Iniciando upload:', file.name)
+    
     try {
       const { data: { user } } = await supabase.auth.getUser()
+      const { data: profile } = await supabase.from('profiles').select('org_id').eq('id', user?.id).single()
+      const orgId = profile?.org_id
       
-      const { error } = await supabase
-        .from('documents')
-        .insert({
-          name: file.name,
-          file_url: 'temp_url',
-          type: 'pdf',
-          file_size_bytes: file.size,
-          is_indexed: true,
-          teacher_id: user?.id,
-          org_id: (await supabase.from('profiles').select('org_id').eq('id', user?.id).single()).data?.org_id
-        })
+      console.log('>>> [DOCS] User/Org:', user?.id, orgId)
 
-      if (error) throw error
+      // 1. Upload para o Storage
+      const fileName = `${Date.now()}-${file.name}`
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('materials')
+        .upload(`${orgId}/${fileName}`, file)
+
+      if (uploadError) throw uploadError
+      console.log('>>> [DOCS] Upload storage OK')
+
+      const fileUrl = supabase.storage.from('materials').getPublicUrl(`${orgId}/${fileName}`).data.publicUrl
+
+      // 2. Inserir registro
+      const { data: docData, error: docError } = await supabase.from('documents').insert({
+        name: file.name,
+        file_url: fileUrl,
+        type: 'pdf',
+        file_size_bytes: file.size,
+        is_indexed: false,
+        teacher_id: user?.id,
+        org_id: orgId
+      }).select().single()
+
+      if (docError) throw docError
+      console.log('>>> [DOCS] Registro banco OK, ID:', docData.id)
+
+      // 3. Indexar
+      console.log('>>> [DOCS] Chamando API de Indexação...')
+      const res = await fetch('/api/ai/documents/index', {
+        method: 'POST',
+        body: JSON.stringify({ documentId: docData.id })
+      })
+      
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Erro na indexação')
+      
+      console.log('>>> [DOCS] Indexação OK:', result.chunks, 'fragmentos')
+      
       loadDocuments()
-    } catch (err) {
-      console.error(err)
+    } catch (err: any) {
+      console.error('Erro no upload/index:', err)
+      alert(`Erro: ${err.message}`)
     } finally {
       setUploading(false)
     }

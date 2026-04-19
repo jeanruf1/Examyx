@@ -22,6 +22,11 @@ export default async function DashboardLayout({
 
   if (!profile) redirect('/login')
 
+  // Redirecionar se precisar trocar senha
+  if (profile.force_password_reset) {
+    redirect('/trocar-senha')
+  }
+
 
   return (
     <div className="min-h-screen bg-page flex">

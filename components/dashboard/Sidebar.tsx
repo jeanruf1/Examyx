@@ -1,10 +1,12 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
   BookOpen, LayoutDashboard, FileText, 
-  Settings, Users, CreditCard, ShieldCheck, 
+  Users, CreditCard, ShieldCheck, 
   Sparkles, ArrowUpCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -13,15 +15,25 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/provas', label: 'Provas', icon: FileText },
   { href: '/documentos', label: 'Materiais', icon: BookOpen },
-  { href: '/professores', label: 'Usuários', icon: Users },
-  { href: '/pagamento', label: 'Faturamento', icon: CreditCard },
-  { href: '/configuracoes', label: 'Ajustes', icon: Settings },
+  { href: '/dashboard/pagamento', label: 'Faturamento', icon: CreditCard },
 ]
 
 export default function Sidebar({ profile }: { profile: any }) {
   const pathname = usePathname()
+  const [org, setOrg] = useState<any>(null)
+  const supabase = createClient()
 
-  const org = profile.organizations
+  useEffect(() => {
+    if (profile?.org_id) {
+      supabase
+        .from('organizations')
+        .select('name, logo_url, plan, trial_ends_at')
+        .eq('id', profile.org_id)
+        .single()
+        .then(({ data }) => setOrg(data))
+    }
+  }, [profile])
+
   const trialEndsAt = org?.trial_ends_at ? new Date(org.trial_ends_at) : null
   const daysLeft = trialEndsAt ? Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 0
   const isTrial = org?.plan === 'trial'
@@ -30,11 +42,24 @@ export default function Sidebar({ profile }: { profile: any }) {
     <aside className="fixed left-0 top-0 h-full w-[260px] flex flex-col z-40 bg-white border-r border-[#E9EAF2]">
       
       {/* Brand Logo */}
-      <div className="p-8 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-[#4F46E5] flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-          <Sparkles className="w-5 h-5 fill-current" />
+      <div className="p-8 border-b border-[#F8F9FE]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#4F46E5] flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden shrink-0">
+            {org?.logo_url ? (
+              <img src={org.logo_url} alt="Logo" className="w-full h-full object-contain p-1.5" />
+            ) : (
+              <Sparkles className="w-6 h-6 text-white" />
+            )}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="font-bold text-[16px] tracking-tight text-[#1A1D2F] truncate leading-tight">
+              {org?.name || 'Examyx'}
+            </span>
+            <span className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-widest mt-0.5">
+              Escola
+            </span>
+          </div>
         </div>
-        <span className="font-bold text-[20px] tracking-tight text-[#1A1D2F]">Examyx</span>
       </div>
 
       {/* Navigation Menu */}
@@ -67,32 +92,11 @@ export default function Sidebar({ profile }: { profile: any }) {
         )}
       </nav>
 
-      {/* Upgrade Card (Dinâmico) */}
-      {profile.role !== 'superadmin' && (
-        <div className="p-6">
-          <div className="bg-[#F5F5FF] rounded-[24px] p-6 text-center relative overflow-hidden group">
-            <div className="absolute top-[-10px] right-[-10px] w-20 h-20 bg-indigo-500/5 rounded-full" />
-            
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                <ArrowUpCircle className="w-6 h-6 text-[#4F46E5]" />
-              </div>
-              <h4 className="text-[15px] font-bold text-[#1A1D2F] mb-1">
-                {isTrial ? 'Período Trial' : 'Assinar Pro'}
-              </h4>
-              <p className="text-[12px] text-[#8E94BB] mb-4">
-                {isTrial 
-                  ? `Restam ${daysLeft > 0 ? daysLeft : 0} dias de teste gratuito.` 
-                  : 'Acesse IA ilimitada e relatórios pedagógicos.'}
-              </p>
-              <button className="w-full py-2.5 bg-[#4F46E5] text-white rounded-[14px] text-[13px] font-bold hover:bg-[#3F37C9] transition-colors shadow-md shadow-indigo-500/20">
-                {isTrial ? 'Mudar para Pro' : 'Upgrade'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <div className="p-8 mt-auto flex items-center justify-center">
+        <span className="text-[11px] font-bold text-[#1A1D2F] opacity-25 uppercase tracking-[0.3em]">
+          Examyx
+        </span>
+      </div>
     </aside>
   )
 }

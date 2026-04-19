@@ -146,7 +146,7 @@ function buildPDFHtml({
       <div class="question">
         <div class="question-num">${idx + 1}.</div>
         <div class="question-body">
-          <div class="question-text">${esc(q.content)}</div>
+          ${renderContentHtml(q.content)}
           ${q.options ? `<div class="options">${optionsHtml}</div>` : ''}
           ${essayLinesHtml}
           ${keyHtml}
@@ -547,6 +547,20 @@ tr:last-child .field-blank { border-bottom: none; }
   margin-top: 5pt;
   line-height: 1.55;
 }
+
+/* ── Imagem na Questão ──────────── */
+.question-image-box {
+  margin: 10pt 0;
+  max-width: 100%;
+  text-align: left;
+}
+.question-image-box img {
+  max-width: 100%;
+  max-height: 250pt;
+  border: 1pt solid #eee;
+  border-radius: 4pt;
+  display: block;
+}
 </style>
 </head>
 <body>
@@ -649,6 +663,26 @@ function esc(str: string | null | undefined): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;')
     .replace(/\n/g, '<br/>')
+}
+
+function renderContentHtml(content: string) {
+  const imgRegex = /!\[.*?\]\((.*?)\)/
+  const match = content.match(imgRegex)
+  
+  if (match) {
+    const imageUrl = match[1]
+    const text = content.replace(imgRegex, '').trim()
+    
+    return `
+      <div class="question-content">
+        ${text ? `<div class="question-text">${esc(text)}</div>` : ''}
+        <div class="question-image-box">
+          <img src="${imageUrl}" alt="Figura" />
+        </div>
+      </div>`
+  }
+  
+  return `<div class="question-text">${esc(content)}</div>`
 }
 
 function shuffleArray<T>(array: T[]): T[] {

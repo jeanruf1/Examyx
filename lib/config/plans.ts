@@ -16,4 +16,4 @@ export type PlanType = keyof typeof PLAN_LIMITS;
  * Estimativa de custo médio de tokens por prova gerada.
  * Usado para calcular a "Capacidade Restante" no dashboard do professor.
  */
-export const AVG_TOKENS_PER_EXAM = 40000; 
+export const AVG_TOKENS_PER_EXAM = 2500; 

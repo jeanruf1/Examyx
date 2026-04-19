@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { 
   X, Camera, Upload, Loader2, 
-  CheckCircle2, AlertCircle, Sparkles,
+  CheckCircle2, AlertCircle, Zap,
   FileSearch, Trash2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'

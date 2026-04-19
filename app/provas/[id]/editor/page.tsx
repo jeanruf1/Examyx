@@ -7,9 +7,12 @@ import Link from 'next/link'
 import {
   ChevronLeft, Wand2, Trash2, GripVertical,
   Check, X, Loader2,
-  CheckCircle2, Info, Brain, Save
+  CheckCircle2, Info, Brain, Save, Plus,
+  Camera, Image as ImageIcon, ImagePlus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import AddQuestionDialog from '@/components/editor/AddQuestionDialog'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 
 const BLOOM_PORTUGUESE: Record<string, string> = {
   memorization: 'Lembrar',
@@ -247,6 +250,7 @@ function QuestionCard({
   onDragStart,
   onDragOver,
   onDrop,
+  onImageUpdate,
 }: {
   question: Question
   index: number
@@ -262,7 +266,34 @@ function QuestionCard({
   onDragStart: () => void
   onDragOver: (e: React.DragEvent) => void
   onDrop: () => void
+  onImageUpdate: (url: string) => void
 }) {
+  const [isUploading, setIsUploading] = useState(false)
+  const supabase = createClient()
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsUploading(true)
+    try {
+      const filePath = `question-assets/${Date.now()}-${file.name}`
+      const { error } = await supabase.storage.from('materials').upload(filePath, file)
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('materials').getPublicUrl(filePath)
+      onImageUpdate(publicUrl)
+    } catch (err) {
+      console.error('Erro no upload da imagem:', err)
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  // Helper para detectar imagem no markdown
+  const imgRegex = /!\[.*?\]\((.*?)\)/
+  const match = question.content.match(imgRegex)
+  const imageUrl = match ? match[1] : null
+  const contentWithoutImg = question.content.replace(imgRegex, '').trim()
+
   function updateField(field: keyof Question, value: any) {
     onUpdate({ ...question, [field]: value })
   }
@@ -368,12 +399,39 @@ function QuestionCard({
       </div>
 
       {/* Question content — inline editable */}
-      <div className="text-[18px] font-semibold text-[#1A1D2F] leading-relaxed mb-8">
+      <div className="text-[18px] font-semibold text-[#1A1D2F] leading-relaxed mb-6">
         <InlineEdit
-          value={question.content}
-          onSave={v => updateField('content', v)}
+          value={contentWithoutImg}
+          onSave={v => updateField('content', imageUrl ? `${v}\n\n![Figura](${imageUrl})` : v)}
           multiline
         />
+      </div>
+
+      {/* Image Section */}
+      <div className="mb-8">
+        {imageUrl ? (
+          <div className="relative group/img inline-block rounded-2xl overflow-hidden border border-[#E9EAF2] bg-neutral-50 max-w-full">
+            <img src={imageUrl} alt="Questão" className="max-h-[300px] w-auto object-contain" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <label className="p-2 bg-white rounded-full cursor-pointer hover:scale-110 transition-transform">
+                <Camera className="w-5 h-5 text-[#4F46E5]" />
+                <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+              </label>
+              <button 
+                onClick={() => updateField('content', contentWithoutImg)}
+                className="p-2 bg-white rounded-full text-red-500 hover:scale-110 transition-transform"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <label className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#4F46E5] text-[11px] font-bold rounded-xl cursor-pointer hover:bg-indigo-100 transition-all w-fit">
+            {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImagePlus className="w-3.5 h-3.5" />}
+            {isUploading ? 'Subindo...' : 'Adicionar Imagem'}
+            <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+          </label>
+        )}
       </div>
 
       {/* Options */}
@@ -455,6 +513,8 @@ export default function ExamEditorPage() {
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [deleteModal, setDeleteModal] = useState<{ open: boolean; id: string | null }>({ open: false, id: null })
   const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Drag state
@@ -513,9 +573,16 @@ export default function ExamEditorPage() {
   }
 
   async function handleDeleteQuestion(questionId: string) {
-    if (!confirm('Remover esta questão da prova?')) return
+    setDeleteModal({ open: true, id: questionId })
+  }
+
+  async function confirmDelete() {
+    const questionId = deleteModal.id
+    if (!questionId) return
+    
     setQuestions(prev => prev.filter(q => q.id !== questionId))
     await supabase.from('questions').delete().eq('id', questionId)
+    setDeleteModal({ open: false, id: null })
   }
 
   function moveQuestion(index: number, direction: 'up' | 'down') {
@@ -549,6 +616,40 @@ export default function ExamEditorPage() {
     persistOrder(newList)
     dragIndex.current = null
     setDragOverIndex(null)
+  }
+
+  async function handleAddQuestions(newQuestions: any[]) {
+    try {
+      setLoading(true)
+      const startIdx = questions.length
+      
+      const toInsert = newQuestions.map((q, i) => ({
+        exam_id: id,
+        org_id: exam.org_id,
+        content: q.content,
+        type: q.type || 'multiple_choice',
+        options: q.options || [],
+        answer: q.answer || '',
+        explanation: q.explanation || '',
+        bloom_level: q.bloom_level || 'application',
+        bncc_code: q.bncc_code || null,
+        order_index: startIdx + i
+      }))
+
+      const { data, error } = await supabase
+        .from('questions')
+        .insert(toInsert)
+        .select()
+
+      if (error) throw error
+      
+      setQuestions(prev => [...prev, ...(data || [])])
+      setIsAddModalOpen(false)
+    } catch (err: any) {
+      alert('Erro ao adicionar questões: ' + err.message)
+    } finally {
+      setLoading(false)
+    }
   }
 
   function persistOrder(newList: Question[]) {
@@ -646,15 +747,40 @@ export default function ExamEditorPage() {
             onDragStart={() => handleDragStart(idx)}
             onDragOver={e => handleDragOver(e, idx)}
             onDrop={() => handleDrop(idx)}
+            onImageUpdate={(url) => handleUpdateQuestion({ ...q, content: `${q.content.replace(/!\[.*?\]\((.*?)\)/, '').trim()}\n\n![Figura](${url})` })}
           />
         ))}
       </div>
 
-      <div className="mt-10 text-center">
+      <div className="mt-10 flex flex-col items-center gap-6">
+        <button 
+          onClick={() => setIsAddModalOpen(true)}
+          className="flex items-center gap-2 px-8 py-4 bg-white border-2 border-dashed border-[#E9EAF2] text-[#4F46E5] rounded-[24px] font-bold text-[15px] hover:border-[#4F46E5] hover:bg-indigo-50 transition-all group"
+        >
+          <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
+          Adicionar Nova Questão
+        </button>
+
         <p className="text-[12px] text-[#C4C9E2]">
           {questions.length} questões · Edições salvas automaticamente
         </p>
       </div>
+
+      <AddQuestionDialog 
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onAdd={handleAddQuestions}
+      />
+
+      <ConfirmModal 
+        isOpen={deleteModal.open}
+        onClose={() => setDeleteModal({ open: false, id: null })}
+        onConfirm={confirmDelete}
+        title="Remover Questão"
+        description="Você tem certeza que deseja excluir esta questão? Esta ação não pode ser desfeita."
+        confirmText="Sim, excluir"
+        variant="danger"
+      />
     </div>
   )
 }

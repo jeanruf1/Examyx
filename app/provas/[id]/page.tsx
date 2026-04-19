@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Clock, Hash, MoreHorizontal, Sparkles, X, Loader2
+  Clock, Hash, MoreHorizontal, Zap, X, Loader2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -55,6 +55,31 @@ const BLOOM_PORTUGUESE: Record<string, string> = {
   analysis: 'Analisar',
   evaluation: 'Avaliar',
   synthesis: 'Criar'
+}
+
+function renderContent(content: string) {
+  const imgRegex = /!\[.*?\]\((.*?)\)/
+  const match = content.match(imgRegex)
+  
+  if (match) {
+    const imageUrl = match[1]
+    const text = content.replace(imgRegex, '').trim()
+    
+    return (
+      <div className="flex flex-col gap-6">
+        {text && <p className="leading-relaxed">{text}</p>}
+        <div className="rounded-3xl overflow-hidden border border-[#E9EAF2] bg-neutral-50 inline-block max-w-full group-hover:border-[#4F46E5]/30 transition-colors">
+          <img 
+            src={imageUrl} 
+            alt="Figura da questão" 
+            className="max-h-[400px] w-auto object-contain"
+          />
+        </div>
+      </div>
+    )
+  }
+  
+  return <p className="leading-relaxed">{content}</p>
 }
 
 export default function ExamPreviewPage() {
@@ -246,8 +271,8 @@ export default function ExamPreviewPage() {
                   </div>
                 </div>
 
-                <div className="text-[19px] font-semibold text-[#1A1D2F] leading-relaxed mb-10">
-                  {q.content}
+                <div className="text-[19px] font-semibold text-[#1A1D2F] mb-10">
+                  {renderContent(q.content)}
                 </div>
 
                 {q.options && (
@@ -330,7 +355,8 @@ export default function ExamPreviewPage() {
                     <span className="text-[11px] font-bold text-[#4F46E5] uppercase tracking-wider">Parecer da IA</span>
                  </div>
                  <p className="text-[13px] text-[#4F46E5]/70 leading-relaxed italic">
-                   {exam.pedagogical_warning || "Avaliação estruturada conforme diretrizes BNCC."}
+                   {exam.pedagogical_warning || (exam.use_bncc ? "Avaliação estruturada conforme diretrizes BNCC." : "Avaliação baseada no material do professor.")
+}
                  </p>
               </div>
 
