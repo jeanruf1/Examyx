@@ -3,12 +3,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'ProvaAI — Gerador de Provas com IA',
-    template: '%s | ProvaAI',
+    default: 'Examyx',
+    template: '%s | Examyx',
   },
-  description: 'Crie provas personalizadas com inteligência artificial em minutos. Alinhadas à BNCC, com suporte a acessibilidade e exportação em PDF.',
+  description: 'Geração de avaliações inteligentes e gestão institucional.',
   keywords: ['provas', 'educação', 'IA', 'BNCC', 'professor', 'escola'],
-  authors: [{ name: 'ProvaAI' }],
+  authors: [{ name: 'Examyx' }],
   robots: 'index, follow',
   icons: {
     icon: '/favicon.png',

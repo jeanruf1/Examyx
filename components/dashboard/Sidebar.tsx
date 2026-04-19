@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { 
-  BookOpen, LayoutDashboard, FileText, 
-  Users, CreditCard, ShieldCheck, 
-  Sparkles, ArrowUpCircle
+import {
+  BookOpen, LayoutDashboard, FileText,
+  Users, CreditCard, ShieldCheck,
+  ArrowUpCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -40,25 +40,13 @@ export default function Sidebar({ profile }: { profile: any }) {
 
   return (
     <aside className="fixed left-0 top-0 h-full w-[260px] flex flex-col z-40 bg-white border-r border-[#E9EAF2]">
-      
-      {/* Brand Logo */}
-      <div className="p-8 border-b border-[#F8F9FE]">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-[#4F46E5] flex items-center justify-center shadow-lg shadow-indigo-500/20 overflow-hidden shrink-0">
-            {org?.logo_url ? (
-              <img src={org.logo_url} alt="Logo" className="w-full h-full object-contain p-1.5" />
-            ) : (
-              <Sparkles className="w-6 h-6 text-white" />
-            )}
-          </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-bold text-[16px] tracking-tight text-[#1A1D2F] truncate leading-tight">
-              {org?.name || 'Examyx'}
-            </span>
-            <span className="text-[10px] font-bold text-[#8E94BB] uppercase tracking-widest mt-0.5">
-              Escola
-            </span>
-          </div>
+
+      {/* Header / Brand */}
+      <div className="p-8 pb-4">
+        <div className="flex flex-col">
+          <h1 className="text-[20px] font-extrabold text-[#1A1D2F] tracking-tight leading-tight uppercase">
+            {org?.name || 'Carregando...'}
+          </h1>
         </div>
       </div>
 
@@ -70,8 +58,8 @@ export default function Sidebar({ profile }: { profile: any }) {
             <Link key={item.href} href={item.href}
               className={cn(
                 "flex items-center gap-4 px-8 py-4 text-[15px] font-medium transition-all duration-200 group border-r-4",
-                isActive 
-                  ? "text-[#4F46E5] border-[#4F46E5] bg-[#F5F5FF]" 
+                isActive
+                  ? "text-[#4F46E5] border-[#4F46E5] bg-[#F5F5FF]"
                   : "text-[#8E94BB] border-transparent hover:text-[#1A1D2F] hover:bg-neutral-50"
               )}>
               <item.icon className={cn("w-5 h-5 transition-colors", isActive ? "text-[#4F46E5]" : "text-[#8E94BB] group-hover:text-[#1A1D2F]")} />
