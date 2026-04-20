@@ -103,4 +103,4 @@ O Examyx utiliza um sistema rígido de **Role-Based Access Control**:
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
 ---
-<p align="center">Desenvolvido com 🍏 e IA para transformar a educação brasileira.</p>
+<p align="center">Desenvolvido IA para transformar a educação brasileira.</p>
