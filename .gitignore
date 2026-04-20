@@ -31,3 +31,5 @@ Thumbs.db
 # Scripts de importação (dados sensíveis)
 scripts/output/
 scripts/*.json
+
+implementation_plan.md
