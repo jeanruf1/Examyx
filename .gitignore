@@ -32,6 +32,12 @@ Thumbs.db
 scripts/
 scratch/
 implementation_plan.md
+SYSTEM_OVERVIEW.md
+.agents/
+
+# Lógica Sensível e Administração
+lib/prompts/
+app/admin/
 
 # Banco de Dados
 supabase/migrations/
