@@ -37,7 +37,11 @@ SYSTEM_OVERVIEW.md
 
 # Lógica Sensível e Administração
 lib/prompts/
+lib/ai/
+lib/rag/
+lib/database.types.ts
 app/admin/
+app/api/ai/
 
 # Banco de Dados
 supabase/
