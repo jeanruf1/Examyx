@@ -40,7 +40,7 @@ lib/prompts/
 app/admin/
 
 # Banco de Dados
-supabase/migrations/
+supabase/
 
 # Bloqueio de arquivos pesados
 package-lock.json
