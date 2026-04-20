@@ -43,8 +43,17 @@ export default function Sidebar({ profile }: { profile: any }) {
 
       {/* Header / Brand */}
       <div className="p-8 pb-4">
-        <div className="flex flex-col">
-          <h1 className="text-[20px] font-extrabold text-[#1A1D2F] tracking-tight leading-tight uppercase">
+        <div className="flex flex-col gap-3">
+          {org?.logo_url && (
+            <div className="h-10 w-fit relative">
+              <img 
+                src={org.logo_url} 
+                alt={org.name}
+                className="h-full w-auto object-contain object-left"
+              />
+            </div>
+          )}
+          <h1 className="text-[18px] font-extrabold text-[#1A1D2F] tracking-tight leading-tight uppercase">
             {org?.name || 'Carregando...'}
           </h1>
         </div>

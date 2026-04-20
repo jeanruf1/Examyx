@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
   ChevronLeft, Printer, Download, Edit3, 
   Brain, CheckCircle2, Info, Star,
-  Clock, Hash, MoreHorizontal, Zap, X, Loader2
+  Clock, Hash, MoreHorizontal, Zap, X, Loader2, Sparkles, AlertCircle
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -349,12 +349,29 @@ export default function ExamPreviewPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="p-6 rounded-3xl bg-indigo-50/50 border border-indigo-100">
+              <div className={cn(
+                "p-6 rounded-3xl border transition-all",
+                exam.pedagogical_warning 
+                  ? "bg-amber-500/10 border-amber-500/20" 
+                  : "bg-indigo-50/50 border-indigo-100"
+              )}>
                  <div className="flex items-center gap-2 mb-3">
-                    <Brain className="w-4 h-4 text-[#4F46E5]" />
-                    <span className="text-[11px] font-bold text-[#4F46E5] uppercase tracking-wider">Parecer da IA</span>
+                    {exam.pedagogical_warning ? (
+                      <AlertCircle className="w-4 h-4 text-amber-500" />
+                    ) : (
+                      <Brain className="w-4 h-4 text-[#4F46E5]" />
+                    )}
+                    <span className={cn(
+                      "text-[11px] font-bold uppercase tracking-wider",
+                      exam.pedagogical_warning ? "text-amber-500" : "text-[#4F46E5]"
+                    )}>
+                      Parecer da IA
+                    </span>
                  </div>
-                 <p className="text-[13px] text-[#4F46E5]/70 leading-relaxed italic">
+                 <p className={cn(
+                   "text-[13px] leading-relaxed italic",
+                   exam.pedagogical_warning ? "text-amber-700/80" : "text-[#4F46E5]/70"
+                 )}>
                    {exam.pedagogical_warning || (exam.use_bncc ? "Avaliação estruturada conforme diretrizes BNCC." : "Avaliação baseada no material do professor.")
 }
                  </p>
