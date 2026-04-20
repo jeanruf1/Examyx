@@ -25,21 +25,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Usuário não encontrado. Verifique seu e-mail ou contate sua escola.' }, { status: 404 })
     }
 
-    // 2. Se for apenas uma verificação (Etapa 1), retornamos sucesso aqui
+    // 2. Verificar no Auth se o usuário já realizou login antes
+    const { data: { user: authUser }, error: authUserError } = await supabaseAdmin.auth.admin.getUserById(profile.id)
+    
+    if (authUserError || !authUser) {
+      return NextResponse.json({ error: 'Erro ao verificar status do usuário.' }, { status: 500 })
+    }
+
+    // Se o last_sign_in_at estiver preenchido, ele já logou e não deve estar aqui
+    if (authUser.last_sign_in_at) {
+      return NextResponse.json({ 
+        error: 'Este usuário já realizou o primeiro acesso. Por favor, use a tela de login ou "Esqueci minha senha".',
+        alreadyActive: true 
+      }, { status: 403 })
+    }
+
+    // 3. Se for apenas uma verificação (Etapa 1), retornamos sucesso aqui
     if (checkOnly) {
       return NextResponse.json({ success: true })
     }
 
-    // 3. Se tiver senha (Etapa 2), atualizamos o usuário no Auth
+    // 4. Se tiver senha (Etapa 2), atualizamos o usuário no Auth
     if (!password || password.length < 6) {
       return NextResponse.json({ error: 'A senha deve ter pelo menos 6 caracteres.' }, { status: 400 })
     }
 
-    const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(profile.id, {
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(profile.id, {
       password: password
     })
 
-    if (authError) throw authError
+    if (updateError) throw updateError
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
