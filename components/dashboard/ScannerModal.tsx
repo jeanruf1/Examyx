@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { 
   X, Camera, Upload, Loader2, 
   CheckCircle2, AlertCircle, Zap,
-  FileSearch, Trash2
+  FileSearch, Trash2, Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
