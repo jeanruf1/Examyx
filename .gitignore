@@ -28,8 +28,13 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Scripts de importação (dados sensíveis)
-scripts/output/
-scripts/*.json
-
+# Scripts e Ferramentas Internas
+scripts/
+scratch/
 implementation_plan.md
+
+# Banco de Dados
+supabase/migrations/
+
+# Bloqueio de arquivos pesados
+package-lock.json
