@@ -62,33 +62,6 @@ graph TD
 
 ---
 
-## 📦 Como Instalar e Rodar
-
-1. **Clone o repositório**:
-   ```bash
-   git clone https://github.com/seu-usuario/examyx.git
-   ```
-
-2. **Instale as dependências**:
-   ```bash
-   npm install
-   ```
-
-3. **Configure as Variáveis de Ambiente**:
-   Crie um arquivo `.env.local` e adicione:
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=seu_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=sua_chave_anon
-   SUPABASE_SERVICE_ROLE_KEY=sua_chave_service_role
-   OPENAI_API_KEY=sua_chave_openai
-   ```
-
-4. **Inicie o Servidor de Desenvolvimento**:
-   ```bash
-   npm run dev
-   ```
-
----
 
 ## 🔒 Segurança (RBAC)
 
